@@ -1,0 +1,10 @@
+.detail-wrap{max-width:1280px}
+.card-soft{border:1px solid #eee;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.badge-light{background:#f3f3f3;color:#333}
+.main-photo img{width:100%;height:460px;object-fit:cover;border-radius:14px}
+.photo-count{position:absolute;right:12px;bottom:12px;background:#0009;color:#fff;
+  padding:2px 8px;border-radius:12px;font-size:.85rem}
+.thumbs{display:flex;gap:8px}
+.thumbs img{width:150px;height:90px;object-fit:cover;border-radius:10px;border:2px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.sticky{position:sticky;top:88px}
+.avatar{width:48px;height:48px;border-radius:50%;object-fit:cover}
