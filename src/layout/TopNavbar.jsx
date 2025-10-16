@@ -38,6 +38,16 @@ export default function TopNavbar(){
               <span className="text-muted">Hi, {user.fullName}</span>
               <Button variant="outline-dark" onClick={onLogout}>Đăng xuất</Button>
               <Button variant="danger" as={Link} to="/search">Đặt phòng</Button>
+              {user?.role === 'admin' && (
+                <>
+                  <Button as={Link} to="/admin" variant="primary">Admin</Button>
+                  <Button as={Link} to="/employee" variant="secondary">Employee</Button>
+                </>
+              )}
+
+              {user?.role === 'employee' && (
+                <Button as={Link} to="/employee" variant="secondary">Employee</Button>
+              )}
             </div>
           ) : (
             <div className="d-flex align-items-center gap-2">
@@ -45,6 +55,10 @@ export default function TopNavbar(){
               <Button as={Link} to="/register" variant="dark">Đăng ký</Button>
             </div>
           )}
+
+          {/* {user?.role === 'admin' && (
+            <Button as={Link} to="/admin" variant="primary" className="ms-2">Admin</Button>
+          )} */}
         </Navbar.Collapse>
       </Container>
     </Navbar>
