@@ -41,7 +41,7 @@ export default function TopNavbar(){
               {user?.role === 'admin' && (
                 <>
                   <Button as={Link} to="/admin" variant="primary">Admin</Button>
-                  <Button as={Link} to="/employee" variant="secondary">Employee</Button>
+                  <Button as={Link} to="/employees" variant="secondary">Employee</Button>
                 </>
               )}
 
