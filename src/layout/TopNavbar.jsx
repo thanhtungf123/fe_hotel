@@ -3,6 +3,8 @@ import Container from 'react-bootstrap/Container'
 import Nav from 'react-bootstrap/Nav'
 import Navbar from 'react-bootstrap/Navbar'
 import Button from 'react-bootstrap/Button'
+import Dropdown from 'react-bootstrap/Dropdown'
+import Image from 'react-bootstrap/Image'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../store/auth'
 import axios from '../api/axiosInstance'
@@ -12,13 +14,11 @@ export default function TopNavbar(){
   const nav = useNavigate();
 
   const onLogout = async () => {
-    const token = user?.token;
-    try { 
-      if (token) await axios.post('/auth/logout'); 
-    } catch (_) { /* ignore */ }
-    logout();
-    nav('/login');
+    try { if (user?.token) await axios.post('/auth/logout'); } catch {}
+    logout(); nav('/login');
   };
+
+  const avatarUrl = user?.avatarUrl || `https://i.pravatar.cc/40?u=${user?.accountId || 'guest'}`;
 
   return (
     <Navbar expand="lg" className="bg-body-tertiary py-3 sticky-top shadow-sm">
@@ -27,18 +27,27 @@ export default function TopNavbar(){
         <Navbar.Toggle aria-controls="main-nav" />
         <Navbar.Collapse id="main-nav">
           <Nav className="me-auto">
-            <Nav.Link href="#rooms">Phòng</Nav.Link>
+            <Nav.Link as={Link} to="/search">Phòng</Nav.Link>
             <Nav.Link href="#amenities">Tiện nghi</Nav.Link>
             <Nav.Link href="#about">Giới thiệu</Nav.Link>
             <Nav.Link href="#contact">Liên hệ</Nav.Link>
           </Nav>
 
           {user?.token ? (
-            <div className="d-flex align-items-center gap-3">
-              <span className="text-muted">Hi, {user.fullName}</span>
-              <Button variant="outline-dark" onClick={onLogout}>Đăng xuất</Button>
-              <Button variant="danger" as={Link} to="/search">Đặt phòng</Button>
-            </div>
+            <Dropdown align="end">
+              <Dropdown.Toggle variant="light" className="border rounded-pill px-2 d-flex align-items-center gap-2">
+                <Image src={avatarUrl} roundedCircle width={28} height={28} />
+                <span className="d-none d-sm-inline">{user.fullName}</span>
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Header>Xin chào, {user.fullName}</Dropdown.Header>
+                <Dropdown.Item as={Link} to="/account/bookings">🧾 Lịch sử đặt phòng</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/account/profile">👤 Thông tin cá nhân</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/account/password">🔒 Đổi mật khẩu</Dropdown.Item>
+                <Dropdown.Divider />
+                <Dropdown.Item onClick={onLogout}>Đăng xuất</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
           ) : (
             <div className="d-flex align-items-center gap-2">
               <Button as={Link} to="/login" variant="outline-dark">Đăng nhập</Button>
