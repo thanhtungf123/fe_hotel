@@ -47,6 +47,8 @@ export default function Admin() {
     const loadAccounts = async () => {
       try {
         const { data } = await axios.get("/admin/accounts");
+        // const { data } = await axios.get(endpoints.accounts());
+
         if (!alive) return;
         setAccounts(Array.isArray(data) ? data : data?.items ?? []);
       } catch (e) {

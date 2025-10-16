@@ -8,8 +8,8 @@ import RoomDetail from './pages/RoomDetail'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Admin from './pages/Admin';
-import Employee from './pages/Employee';
-import Account from './pages/Account';
+// import Employee from './pages/Employee';
+// import Account from './pages/Account';
 
 // +++ NEW
 import Booking from './pages/Booking'
@@ -24,8 +24,8 @@ export default function App(){
         <Route path="/rooms/:id" element={<RoomDetail />} />
         
         {/* User Account */}
-        <Route path="/account" element={<Account />} />
-        <Route path="/employee" element={<Employee />} />
+        {/*<Route path="/account" element={<Account />} />*/}
+        {/*<Route path="/employee" element={<Employee />} />*/}
         <Route path="/admin" element={<Admin />} /> 
 
         {/* Booking */}

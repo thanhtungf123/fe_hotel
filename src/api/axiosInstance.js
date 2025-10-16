@@ -5,14 +5,17 @@ const axiosInstance = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Gắn token từ localStorage (nếu có)
 axiosInstance.interceptors.request.use((config) => {
-  const raw = localStorage.getItem("auth");
-  if (raw) {
-    const auth = JSON.parse(raw);
-    if (auth?.token) {
-      config.headers["X-Auth-Token"] = auth.token;
+  try {
+    const raw = sessionStorage.getItem("auth") || localStorage.getItem("auth");
+    if (raw) {
+      const auth = JSON.parse(raw);
+      if (auth?.token) {
+        config.headers["X-Auth-Token"] = auth.token;
+      }
     }
+  } catch (e) {
+    console.warn("Auth parse error", e);
   }
   return config;
 });
