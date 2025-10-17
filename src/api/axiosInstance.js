@@ -6,27 +6,28 @@ const axiosInstance = axios.create({
   timeout: 15000,
 });
 
-// Gắn token từ localStorage (nếu có)
+// === Interceptor: Request ===
 axiosInstance.interceptors.request.use((config) => {
   try {
-    const raw = localStorage.getItem("auth");
+    // Ưu tiên sessionStorage, fallback sang localStorage
+    const raw = sessionStorage.getItem("auth") || localStorage.getItem("auth");
     if (raw) {
       const auth = JSON.parse(raw);
       if (auth?.token) {
         config.headers["X-Auth-Token"] = auth.token;
       }
     }
-  } catch {
-    // bỏ qua lỗi parse
+  } catch (e) {
+    console.warn("Auth parse error", e);
   }
   return config;
 });
 
-// Chuẩn hoá lỗi (tuỳ chọn)
+// === Interceptor: Response ===
 axiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {
-    // để nguyên cho caller xử lý message, nhưng đảm bảo có shape chuẩn
+    // Chuẩn hoá lỗi khi mất kết nối hoặc lỗi mạng
     if (!err.response) {
       err.response = { data: { message: "Không thể kết nối máy chủ." }, status: 0 };
     }

@@ -7,11 +7,19 @@ import Search from './pages/Search'
 import RoomDetail from './pages/RoomDetail'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+
+// --- User Account Pages ---
 import BookingHistory from './pages/account/BookingHistory'
 import Profile from './pages/account/Profile'
 import ChangePassword from './pages/account/ChangePassword'
-import CancelRequests from './pages/admin/CancelRequests';
-// +++ NEW
+
+// --- Admin Pages ---
+import Admin from './pages/Admin'
+import ShowCreateAccount from './pages/admin/ShowCreateAccount'
+import ShowEditAccount from './pages/admin/ShowEditAccount'
+import CancelRequests from './pages/admin/CancelRequests'
+
+// --- Booking ---
 import Booking from './pages/Booking'
 
 export default function App(){
@@ -19,6 +27,7 @@ export default function App(){
     <div>
       <TopNavbar />
       <Routes>
+        {/* General */}
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<Search />} />
         <Route path="/rooms/:id" element={<RoomDetail />} />
@@ -26,17 +35,20 @@ export default function App(){
         {/* Booking */}
         <Route path="/booking/:id" element={<Booking />} />
 
-        {/* Auth */}
+        {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Account */}
-       <Route path="/account/bookings" element={<BookingHistory />} />
-       <Route path="/account/profile" element={<Profile />} />
-       <Route path="/account/password" element={<ChangePassword />} />
+        {/* User Account */}
+        <Route path="/account/bookings" element={<BookingHistory />} />
+        <Route path="/account/profile" element={<Profile />} />
+        <Route path="/account/password" element={<ChangePassword />} />
 
-       {/* Admin */}
-       <Route path="/admin/cancel-requests" element={<CancelRequests />} />
+        {/* Admin Management */}
+        <Route path="/admin" element={<Admin />} /> 
+        <Route path="/admin/account/create" element={<ShowCreateAccount />} />
+        <Route path="/admin/accounts/:id" element={<ShowEditAccount />} />
+        <Route path="/admin/cancel-requests" element={<CancelRequests />} />
       </Routes>
       <Footer />
     </div>

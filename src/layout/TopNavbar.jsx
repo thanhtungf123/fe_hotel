@@ -13,14 +13,18 @@ export default function TopNavbar() {
   const { user, logout } = useAuth();
   const nav = useNavigate();
 
+  // === Đăng xuất ===
   const onLogout = async () => {
     try {
       if (user?.token) await axios.post('/auth/logout');
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     logout();
     nav('/login', { replace: true });
   };
 
+  // === Role và Avatar ===
   const roleLower = String(user?.role || '').toLowerCase();
   const isStaff = ['staff', 'admin'].includes(roleLower);
 
@@ -60,6 +64,7 @@ export default function TopNavbar() {
                   {user?.fullName || 'Tài khoản'}
                 </span>
               </Dropdown.Toggle>
+
               <Dropdown.Menu>
                 <Dropdown.Header>Xin chào, {user?.fullName || 'bạn'}</Dropdown.Header>
 
@@ -78,6 +83,9 @@ export default function TopNavbar() {
                 {isStaff && (
                   <>
                     <Dropdown.Divider />
+                    <Dropdown.Item as={Link} to="/admin">
+                      ⚙️ Trang quản trị
+                    </Dropdown.Item>
                     <Dropdown.Item as={Link} to="/admin/cancel-requests">
                       🛎 Duyệt huỷ đặt phòng
                     </Dropdown.Item>
@@ -103,4 +111,3 @@ export default function TopNavbar() {
     </Navbar>
   );
 }
-
