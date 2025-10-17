@@ -10,7 +10,7 @@ import Register from './pages/auth/Register'
 import BookingHistory from './pages/account/BookingHistory'
 import Profile from './pages/account/Profile'
 import ChangePassword from './pages/account/ChangePassword'
-
+import CancelRequests from './pages/admin/CancelRequests';
 // +++ NEW
 import Booking from './pages/Booking'
 
@@ -34,6 +34,9 @@ export default function App(){
        <Route path="/account/bookings" element={<BookingHistory />} />
        <Route path="/account/profile" element={<Profile />} />
        <Route path="/account/password" element={<ChangePassword />} />
+
+       {/* Admin */}
+       <Route path="/admin/cancel-requests" element={<CancelRequests />} />
       </Routes>
       <Footer />
     </div>
