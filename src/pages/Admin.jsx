@@ -9,17 +9,112 @@ export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
   // ---- Handlers
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this account?")) {
-      try {
-        await axios.delete(`/admin/accounts/${id}`);
-        navigate("/admin"); // Redirect to admin page
-      } catch (error) {
-        console.error("Failed to delete account", error);
-        alert("Error deleting account.");
+const handleDeleteAccount = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this account?")) return;
+
+  // helper hiển thị lỗi rõ ràng
+  const showError = (err) => {
+    const msg =
+      err?.response?.data?.message ||
+      err?.response?.data ||
+      err?.message ||
+      "Unknown error";
+    alert(`Delete failed: ${msg}`);
+  };
+
+  try {
+    // Thử endpoint chuẩn Admin trước
+    let res;
+    try {
+      res = await axios.delete(`/admin/accounts/${id}`);
+    } catch (e) {
+      // Fallback nếu BE không có /admin/... (405/404)
+      const code = e?.response?.status;
+      if (code === 404 || code === 405) {
+        res = await axios.delete(`/accounts/${id}`);
+      } else {
+        throw e;
       }
     }
+
+    // Thành công (200/204)
+    // Cập nhật UI tại chỗ (không cần navigate)
+    setAccounts((prev) => prev.filter((a) => a.id !== id));
+  } catch (error) {
+    const code = error?.response?.status;
+
+    if (code === 401 || code === 403) {
+      alert("You are not authorized to delete this account.");
+      return;
+    }
+    if (code === 404) {
+      alert("Account not found. It may have been deleted already.");
+      // Có thể loại bỏ khỏi UI luôn
+      setAccounts((prev) => prev.filter((a) => a.id !== id));
+      return;
+    }
+    if (code === 409) {
+      // thường là ràng buộc FK (account đang được link với employee/payments/...)
+      alert("Cannot delete: this account is referenced by other data (e.g., an employee). Unlink/remove dependencies first.");
+      return;
+    }
+
+    console.error("Failed to delete account", error);
+    showError(error);
+  }
+};
+
+  // ---- Create handlers
+  const submitCreateAccount = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      // Gửi đúng field theo entity BE
+      const payload = {
+        fullName: accForm.fullName?.trim(),
+        email: accForm.email?.trim(),
+        phoneNumber: accForm.phoneNumber?.trim(),
+        passwordHash: accForm.passwordHash || "",
+        isActive: !!accForm.isActive,
+        // role: { id: Number(accForm.roleId) } // nếu BE yêu cầu role object
+      };
+      await axios.post("/admin/accounts", payload);
+      setShowCreateAcc(false);
+      setAccForm({ fullName: "", email: "", phoneNumber: "", passwordHash: "", isActive: true });
+      await reloadAccounts();
+    } catch (err) {
+      alert(err?.response?.data || err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const submitCreateEmployee = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      // BE không dùng DTO → nhận trực tiếp entity fields
+      const payload = {
+        position: empForm.position?.trim() || null,
+        department: empForm.department?.trim() || null,
+        hireDate: empForm.hireDate || null,
+        salary: empForm.salary ? Number(empForm.salary) : null,
+        status: empForm.status?.trim() || null
+      };
+      const params = {};
+      if (empForm.accountId) params.accountId = Number(empForm.accountId);
+
+      await axios.post("/employees", payload, { params });
+      setShowCreateEmp(false);
+      setEmpForm({ position: "", department: "", hireDate: "", salary: "", status: "Active", accountId: "" });
+      await reloadEmployees();
+    } catch (err) {
+      alert(err?.response?.data || err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // ---- Guard: only Admin (role === "admin") can view this page
   const getRoleName = () => {
     let rn =
@@ -89,6 +184,9 @@ export default function Admin() {
     return () => { alive = false; };
   }, []);
 
+
+
+
   // ---- Helpers
   const norm = (v) => (v ?? "").toString().toLowerCase();
 
@@ -156,6 +254,11 @@ export default function Admin() {
                 onChange={(e) => setQAcc(e.target.value)}
               />
             </Col>
+            <Col className="text-end">
+              <Button as={Link} to="/admin/account/create" variant="primary">
+                + Create Account
+              </Button>
+            </Col>
           </Row>
 
           {loading.accounts ? (
@@ -188,10 +291,10 @@ export default function Admin() {
                         <td>{a.email || "-"}</td>
                         <td>{a.phone || "-"}</td>
                         <td className="text-capitalize">{roleLabel || "-"}</td>
-                        <td><StatusBadge value={a.status} /></td>
+                        <td><StatusBadge value={a.isActive ? "Active" : "Disabled"} /></td>
                         <td className="text-nowrap">
-                          <Button size="sm" variant="outline-danger" className="me-2" onClick={() => handleDelete(a.id)}> Delete </Button>
-                          <Button as={Link} to={`/admin/account/${a.id}/edit`} size="sm" variant="outline-secondary">Edit</Button>
+                          <Button size="sm" variant="outline-danger" className="me-2" onClick={() => handleDeleteAccount(a.id)}> Delete </Button>
+                          <Button as={Link} to={`/admin/accounts/${a.id}`} size="sm" variant="outline-secondary">Edit</Button>
                         </td>
                       </tr>
                     );
@@ -211,6 +314,11 @@ export default function Admin() {
                 value={qEmp}
                 onChange={(e) => setQEmp(e.target.value)}
               />
+            </Col>
+            <Col className="text-end">
+              <Button onClick={() => setShowCreateEmp(true)} variant="primary">
+                + Create Employee
+              </Button>
             </Col>
           </Row>
 
