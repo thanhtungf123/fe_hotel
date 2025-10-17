@@ -35,8 +35,8 @@ export default function Booking(){
   const [room, setRoom] = useState(null)
 
   const [form, setForm] = useState({
-    checkInDate: addDays(1),
-    checkOutDate: addDays(2),
+    checkIn: addDays(1),
+    checkOut: addDays(2),
     guests: 2,
     specialRequests: ''
   })
@@ -60,18 +60,18 @@ export default function Booking(){
   const price = room?.priceVnd ?? 0
   const nights = useMemo(()=>{
     try{
-      const inD  = new Date(form.checkInDate)
-      const outD = new Date(form.checkOutDate)
+      const inD  = new Date(form.checkIn)
+      const outD = new Date(form.checkOut)
       const diff = Math.round((outD - inD) / (1000*60*60*24))
       return Math.max(0, diff)
     }catch{ return 0 }
-  }, [form.checkInDate, form.checkOutDate])
+  }, [form.checkIn, form.checkOut])
 
   const total = useMemo(()=> price * Math.max(1, nights), [price, nights])
 
   const validate = () => {
-    if (!form.checkInDate || !form.checkOutDate) return 'Vui lòng chọn ngày nhận/trả phòng'
-    if (new Date(form.checkOutDate) <= new Date(form.checkInDate)) return 'Ngày trả phòng phải sau ngày nhận phòng'
+    if (!form.checkIn || !form.checkOut) return 'Vui lòng chọn ngày nhận/trả phòng'
+    if (new Date(form.checkOut) <= new Date(form.checkIn)) return 'Ngày trả phòng phải sau ngày nhận phòng'
     if (!form.guests || Number(form.guests) < 1) return 'Số khách không hợp lệ'
     if (capacity && Number(form.guests) > capacity) return `Số khách tối đa: ${capacity}`
     if (auth?.role && auth.role.toLowerCase() !== 'customer') return 'Chỉ tài khoản khách hàng (customer) mới được đặt phòng'
@@ -90,10 +90,13 @@ export default function Booking(){
     try{
       const payload = {
         roomId: Number(id),
-        checkInDate: form.checkInDate,
-        checkOutDate: form.checkOutDate,
-        guests: Number(form.guests)
-      }
+        guests: Number(form.guests),
+        // Gửi đủ alias để BE map được
+        checkIn: form.checkIn,
+        checkOut: form.checkOut,
+        checkIn: form.checkIn,
+        checkOut: form.checkOut
+        }
       // BE: POST /api/bookings -> BookingResponse
       const { data } = await axios.post('/bookings', payload)
       setSuccess(data) // {bookingId, totalPrice,...} (tuỳ BE)
