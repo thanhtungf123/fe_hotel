@@ -1,13 +1,25 @@
 // src/pages/Admin.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Container, Row, Col, Table, Spinner, Alert, Form, Badge, Tabs, Tab, Button } from "react-bootstrap";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import axios from "../api/axiosInstance";
 import { useAuth } from "../store/auth";
 
 export default function Admin() {
   const { user } = useAuth();
-
+  const navigate = useNavigate();
+  // ---- Handlers
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this account?")) {
+      try {
+        await axios.delete(`/admin/accounts/${id}`);
+        navigate("/admin"); // Redirect to admin page
+      } catch (error) {
+        console.error("Failed to delete account", error);
+        alert("Error deleting account.");
+      }
+    }
+  };
   // ---- Guard: only Admin (role === "admin") can view this page
   const getRoleName = () => {
     let rn =
@@ -23,7 +35,7 @@ export default function Admin() {
           (typeof auth?.role === "string" ? auth.role : undefined) ??
           auth?.role?.name ??
           auth?.role?.role_name;
-      } catch {}
+      } catch { }
     }
     return typeof rn === "string" ? rn.toLowerCase() : undefined;
   };
@@ -113,9 +125,9 @@ export default function Admin() {
     const val = (value ?? "").toString().toLowerCase();
     const variant =
       val === "active" || val === "enabled" || val === "online" ? "success" :
-      val === "pending" || val === "applying" ? "warning" :
-      val === "banned" || val === "disabled" || val === "offline" ? "secondary" :
-      "info";
+        val === "pending" || val === "applying" ? "warning" :
+          val === "banned" || val === "disabled" || val === "offline" ? "secondary" :
+            "info";
     return <Badge bg={variant} className="text-uppercase">{value ?? "N/A"}</Badge>;
   };
 
@@ -154,37 +166,37 @@ export default function Admin() {
               <Table hover bordered size="sm" className="align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th style={{width: 80}}>ID</th>
+                    <th style={{ width: 80 }}>ID</th>
                     <th>Full name</th>
                     <th>Username</th>
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Role</th>
                     <th>Status</th>
-                    <th style={{width:120}}>Actions</th>
+                    <th style={{ width: 120 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredAccounts.length === 0 ? (
                     <tr><td colSpan={8} className="text-center text-muted py-4">No accounts found</td></tr>
                   ) : filteredAccounts.map((a) => {
-                      const roleLabel = typeof a.role === "string" ? a.role : (a.role?.name ?? "-");
-                      return (
-                        <tr key={a.id}>
-                          <td>{a.id}</td>
-                          <td>{a.fullName || "-"}</td>
-                          <td>{a.username || "-"}</td>
-                          <td>{a.email || "-"}</td>
-                          <td>{a.phone || "-"}</td>
-                          <td className="text-capitalize">{roleLabel || "-"}</td>
-                          <td><StatusBadge value={a.status} /></td>
-                          <td className="text-nowrap">
-                            <Button as={Link} to={`/account/${a.id}`} size="sm" variant="outline-primary" className="me-2">View</Button>
-                            <Button as={Link} to={`/account/${a.id}/edit`} size="sm" variant="outline-secondary">Edit</Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    const roleLabel = typeof a.role === "string" ? a.role : (a.role?.name ?? "-");
+                    return (
+                      <tr key={a.id}>
+                        <td>{a.id}</td>
+                        <td>{a.fullName || "-"}</td>
+                        <td>{a.username || "-"}</td>
+                        <td>{a.email || "-"}</td>
+                        <td>{a.phone || "-"}</td>
+                        <td className="text-capitalize">{roleLabel || "-"}</td>
+                        <td><StatusBadge value={a.status} /></td>
+                        <td className="text-nowrap">
+                          <Button size="sm" variant="outline-danger" className="me-2" onClick={() => handleDelete(a.id)}> Delete </Button>
+                          <Button as={Link} to={`/admin/account/${a.id}/edit`} size="sm" variant="outline-secondary">Edit</Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
             </div>
@@ -212,14 +224,14 @@ export default function Admin() {
               <Table hover bordered size="sm" className="align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th style={{width: 80}}>ID</th>
+                    <th style={{ width: 80 }}>ID</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Position</th>
                     <th>Department</th>
                     <th>Status</th>
-                    <th style={{width:120}}>Actions</th>
+                    <th style={{ width: 120 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -235,7 +247,7 @@ export default function Admin() {
                       <td>{e.department || "-"}</td>
                       <td><StatusBadge value={e.status} /></td>
                       <td className="text-nowrap">
-                        <Button as={Link} to={`/employee/${e.id}`} size="sm" variant="outline-primary" className="me-2">View</Button>
+                        <Button as={Link} to={`/employee/${e.id}/delete`} size="sm" variant="outline-primary" className="me-2">Deactive</Button>
                         <Button as={Link} to={`/employee/${e.id}/edit`} size="sm" variant="outline-secondary">Edit</Button>
                       </td>
                     </tr>
