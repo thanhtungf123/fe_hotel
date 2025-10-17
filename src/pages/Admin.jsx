@@ -144,6 +144,7 @@ export default function Admin() {
         </Col>
       </Row>
 
+
       <Tabs defaultActiveKey="accounts" id="admin-tabs" className="mb-4">
         {/* -------- Accounts -------- */}
         <Tab eventKey="accounts" title={`Accounts (${accounts.length})`}>
@@ -168,7 +169,6 @@ export default function Admin() {
                   <tr>
                     <th style={{ width: 80 }}>ID</th>
                     <th>Full name</th>
-                    <th>Username</th>
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Role</th>
@@ -185,7 +185,6 @@ export default function Admin() {
                       <tr key={a.id}>
                         <td>{a.id}</td>
                         <td>{a.fullName || "-"}</td>
-                        <td>{a.username || "-"}</td>
                         <td>{a.email || "-"}</td>
                         <td>{a.phone || "-"}</td>
                         <td className="text-capitalize">{roleLabel || "-"}</td>
@@ -225,11 +224,13 @@ export default function Admin() {
                 <thead className="table-light">
                   <tr>
                     <th style={{ width: 80 }}>ID</th>
-                    <th>Name</th>
+                    <th>Employee ID</th>
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Position</th>
                     <th>Department</th>
+                    <th>Salary</th>
+                    <th>Hire Date</th>
                     <th>Status</th>
                     <th style={{ width: 120 }}>Actions</th>
                   </tr>
@@ -240,11 +241,13 @@ export default function Admin() {
                   ) : filteredEmployees.map((e) => (
                     <tr key={e.id}>
                       <td>{e.id}</td>
-                      <td>{e.name || e.fullName || "-"}</td>
-                      <td>{e.email || "-"}</td>
-                      <td>{e.phone || "-"}</td>
+                      <td>{e.employeeCode || e.fullName || "-"}</td>
+                      <td>{e.account || "-"}</td>
+                      <td>{e.account.phone || "-"}</td>
                       <td>{e.position || "-"}</td>
                       <td>{e.department || "-"}</td>
+                      <td>{e.salary || "-"}</td>
+                      <td>{e.hireDate || "-"}</td>
                       <td><StatusBadge value={e.status} /></td>
                       <td className="text-nowrap">
                         <Button as={Link} to={`/employee/${e.id}/delete`} size="sm" variant="outline-primary" className="me-2">Deactive</Button>
