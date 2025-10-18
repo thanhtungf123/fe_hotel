@@ -289,7 +289,7 @@ const handleDeleteAccount = async (id) => {
                         <td>{a.id}</td>
                         <td>{a.fullName || "-"}</td>
                         <td>{a.email || "-"}</td>
-                        <td>{a.phone || "-"}</td>
+                        <td>{a.phoneNumber || "-"}</td>
                         <td className="text-capitalize">{roleLabel || "-"}</td>
                         <td><StatusBadge value={a.isActive ? "Active" : "Disabled"} /></td>
                         <td className="text-nowrap">
