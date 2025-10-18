@@ -316,7 +316,7 @@ const handleDeleteAccount = async (id) => {
               />
             </Col>
             <Col className="text-end">
-              <Button onClick={() => setShowCreateEmp(true)} variant="primary">
+              <Button as={Link} to="/admin/employee/create" variant="primary">
                 + Create Employee
               </Button>
             </Col>
