@@ -39,7 +39,7 @@ export default function ShowCreateAccount() {
 
       // Thử /admin/accounts trước; nếu không có thì fallback /accounts
       try {
-        await axios.post("/admin/accounts", payload);
+        await axios.post("/admin/accounts", payload, { params });
       } catch (ex) {
         const code = ex?.response?.status;
         if (code === 404 || code === 405) {

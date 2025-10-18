@@ -18,6 +18,7 @@ import Admin from './pages/Admin'
 import ShowCreateAccount from './pages/admin/ShowCreateAccount'
 import ShowEditAccount from './pages/admin/ShowEditAccount'
 import CancelRequests from './pages/admin/CancelRequests'
+import ShowCreateEmployee from './pages/admin/ShowCreateEmployee'
 
 // --- Booking ---
 import Booking from './pages/Booking'
@@ -43,12 +44,13 @@ export default function App(){
         <Route path="/account/bookings" element={<BookingHistory />} />
         <Route path="/account/profile" element={<Profile />} />
         <Route path="/account/password" element={<ChangePassword />} />
-
+        
         {/* Admin Management */}
         <Route path="/admin" element={<Admin />} /> 
         <Route path="/admin/account/create" element={<ShowCreateAccount />} />
         <Route path="/admin/accounts/:id" element={<ShowEditAccount />} />
         <Route path="/admin/cancel-requests" element={<CancelRequests />} />
+        <Route path="/admin/employee/create" element={<ShowCreateEmployee />} />
       </Routes>
       <Footer />
     </div>

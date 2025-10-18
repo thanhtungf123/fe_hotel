@@ -8,6 +8,132 @@ import { useAuth } from "../store/auth";
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // ---- State (hooks phải đầu tiên)
+  const [accounts, setAccounts] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState({ accounts: true, employees: true });
+  const [error, setError] = useState({ accounts: "", employees: "" });
+  const [qAcc, setQAcc] = useState("");
+  const [qEmp, setQEmp] = useState("");
+
+  // ---- Helper function (có thể ở trước useEffect)
+  const getRoleName = () => {
+    let rn =
+      (typeof user?.role === "string" ? user.role : undefined) ??
+      user?.role?.name ??
+      user?.role?.role_name;
+
+    if (!rn) {
+      try {
+        const raw = sessionStorage.getItem("auth") || localStorage.getItem("auth");
+        const auth = raw ? JSON.parse(raw) : undefined;
+        rn =
+          (typeof auth?.role === "string" ? auth.role : undefined) ??
+          auth?.role?.name ??
+          auth?.role?.role_name;
+      } catch { }
+    }
+    return typeof rn === "string" ? rn.toLowerCase() : undefined;
+  };
+  
+  const roleName = getRoleName();
+// ---- useEffect (hooks phải trước return)
+// ---- Fetch data (điều chỉnh endpoint phù hợp BE của bạn)
+  useEffect(() => {
+    let alive = true;
+
+    const loadAccounts = async () => {
+      try {
+        const { data } = await axios.get("/admin/accounts");
+        // const { data } = await axios.get(endpoints.accounts());
+
+        if (!alive) return;
+        setAccounts(Array.isArray(data) ? data : data?.items ?? []);
+      } catch (e) {
+        if (!alive) return;
+        setError((s) => ({ ...s, accounts: e?.response?.data?.message || e.message }));
+      } finally {
+        if (alive) setLoading((s) => ({ ...s, accounts: false }));
+      }
+    };
+
+    const loadEmployees = async () => {
+      try {
+        const { data } = await axios.get("/admin/employees");
+        if (!alive) return;
+        setEmployees(Array.isArray(data) ? data : data?.items ?? []);
+      } catch (e) {
+        if (!alive) return;
+        setError((s) => ({ ...s, employees: e?.response?.data?.message || e.message }));
+      } finally {
+        if (alive) setLoading((s) => ({ ...s, employees: false }));
+      }
+    };
+
+    loadAccounts();
+    loadEmployees();
+
+console.log("📊 Accounts state:", accounts);
+console.log("🔍 Filtered accounts:", filteredAccounts);
+console.log("❓ Why not showing?", {
+  accountsLength: accounts.length,
+  filteredLength: filteredAccounts.length,
+  loading: loading.accounts,
+  error: error.accounts
+});
+
+
+
+    return () => { alive = false; };
+  }, []);
+
+
+
+
+  // ---- Helpers
+  const norm = (v) => (v ?? "").toString().toLowerCase();
+
+  const filteredAccounts = useMemo(() => {
+    const q = norm(qAcc);
+    if (!q) return accounts;
+    return accounts.filter((a) =>
+      [
+        a.id,
+        a.fullName,
+        a.email,
+        a.username,
+        a.phone,
+        // role có thể là string hoặc object
+        typeof a.role === "string" ? a.role : a.role?.name,
+        a.status,
+      ]
+        .map(norm)
+        .some((s) => s.includes(q))
+    );
+  }, [accounts, qAcc]);
+
+  const filteredEmployees = useMemo(() => {
+    const q = norm(qEmp);
+    if (!q) return employees;
+    return employees.filter((e) =>
+      [e.id, e.name || e.fullName, e.email, e.phone, e.position, e.department, e.status]
+        .map(norm)
+        .some((s) => s.includes(q))
+    );
+  }, [employees, qEmp]);
+
+  // ---- Guard: only Admin (role === "admin") can view this page
+  
+// Debug logging
+  console.log("🔐 User:", user);
+  console.log("👤 Role:", roleName);
+  console.log("📊 Accounts:", accounts);
+  console.log("👥 Employees:", employees);
+  
+  if (!user?.token) return <Navigate to="/login" replace />;
+  if (roleName !== "admin") return <Navigate to="/" replace />;
+
   // ---- Handlers
 const handleDeleteAccount = async (id) => {
   if (!window.confirm("Are you sure you want to delete this account?")) return;
@@ -21,6 +147,8 @@ const handleDeleteAccount = async (id) => {
       "Unknown error";
     alert(`Delete failed: ${msg}`);
   };
+
+  
 
   try {
     // Thử endpoint chuẩn Admin trước
@@ -115,109 +243,12 @@ const handleDeleteAccount = async (id) => {
     }
   };
 
-  // ---- Guard: only Admin (role === "admin") can view this page
-  const getRoleName = () => {
-    let rn =
-      (typeof user?.role === "string" ? user.role : undefined) ??
-      user?.role?.name ??
-      user?.role?.role_name;
-
-    if (!rn) {
-      try {
-        const raw = sessionStorage.getItem("auth") || localStorage.getItem("auth");
-        const auth = raw ? JSON.parse(raw) : undefined;
-        rn =
-          (typeof auth?.role === "string" ? auth.role : undefined) ??
-          auth?.role?.name ??
-          auth?.role?.role_name;
-      } catch { }
-    }
-    return typeof rn === "string" ? rn.toLowerCase() : undefined;
-  };
-
-  const roleName = getRoleName();
-  if (!user?.token) return <Navigate to="/login" replace />;
-  if (roleName !== "admin") return <Navigate to="/" replace />;
-
-  // ---- State
-  const [accounts, setAccounts] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState({ accounts: true, employees: true });
-  const [error, setError] = useState({ accounts: "", employees: "" });
-  const [qAcc, setQAcc] = useState("");
-  const [qEmp, setQEmp] = useState("");
-
-  // ---- Fetch data (điều chỉnh endpoint phù hợp BE của bạn)
-  useEffect(() => {
-    let alive = true;
-
-    const loadAccounts = async () => {
-      try {
-        const { data } = await axios.get("/admin/accounts");
-        // const { data } = await axios.get(endpoints.accounts());
-
-        if (!alive) return;
-        setAccounts(Array.isArray(data) ? data : data?.items ?? []);
-      } catch (e) {
-        if (!alive) return;
-        setError((s) => ({ ...s, accounts: e?.response?.data?.message || e.message }));
-      } finally {
-        if (alive) setLoading((s) => ({ ...s, accounts: false }));
-      }
-    };
-
-    const loadEmployees = async () => {
-      try {
-        const { data } = await axios.get("/admin/employees");
-        if (!alive) return;
-        setEmployees(Array.isArray(data) ? data : data?.items ?? []);
-      } catch (e) {
-        if (!alive) return;
-        setError((s) => ({ ...s, employees: e?.response?.data?.message || e.message }));
-      } finally {
-        if (alive) setLoading((s) => ({ ...s, employees: false }));
-      }
-    };
-
-    loadAccounts();
-    loadEmployees();
-    return () => { alive = false; };
-  }, []);
+  
 
 
-
-
-  // ---- Helpers
-  const norm = (v) => (v ?? "").toString().toLowerCase();
-
-  const filteredAccounts = useMemo(() => {
-    const q = norm(qAcc);
-    if (!q) return accounts;
-    return accounts.filter((a) =>
-      [
-        a.id,
-        a.fullName,
-        a.email,
-        a.username,
-        a.phone,
-        // role có thể là string hoặc object
-        typeof a.role === "string" ? a.role : a.role?.name,
-        a.status,
-      ]
-        .map(norm)
-        .some((s) => s.includes(q))
-    );
-  }, [accounts, qAcc]);
-
-  const filteredEmployees = useMemo(() => {
-    const q = norm(qEmp);
-    if (!q) return employees;
-    return employees.filter((e) =>
-      [e.id, e.name || e.fullName, e.email, e.phone, e.position, e.department, e.status]
-        .map(norm)
-        .some((s) => s.includes(q))
-    );
-  }, [employees, qEmp]);
+  
+  // ---- StatusBadge component
+  
 
   const StatusBadge = ({ value }) => {
     const val = (value ?? "").toString().toLowerCase();
@@ -289,7 +320,7 @@ const handleDeleteAccount = async (id) => {
                         <td>{a.id}</td>
                         <td>{a.fullName || "-"}</td>
                         <td>{a.email || "-"}</td>
-                        <td>{a.phone || "-"}</td>
+                        <td>{a.phoneNumber || "-"}</td>
                         <td className="text-capitalize">{roleLabel || "-"}</td>
                         <td><StatusBadge value={a.isActive ? "Active" : "Disabled"} /></td>
                         <td className="text-nowrap">
@@ -316,7 +347,8 @@ const handleDeleteAccount = async (id) => {
               />
             </Col>
             <Col className="text-end">
-              <Button onClick={() => setShowCreateEmp(true)} variant="primary">
+              {/* <Button onClick={() => setShowCreateEmp(true)} variant="primary"> */}
+              <Button as={Link} to="/admin/employee/create" variant="primary">
                 + Create Employee
               </Button>
             </Col>
@@ -334,7 +366,7 @@ const handleDeleteAccount = async (id) => {
                     <th style={{ width: 80 }}>ID</th>
                     <th>Employee ID</th>
                     <th>Email</th>
-                    <th>Phone</th>
+                    {/* <th>Phone</th> */}
                     <th>Position</th>
                     <th>Department</th>
                     <th>Salary</th>
@@ -345,13 +377,13 @@ const handleDeleteAccount = async (id) => {
                 </thead>
                 <tbody>
                   {filteredEmployees.length === 0 ? (
-                    <tr><td colSpan={8} className="text-center text-muted py-4">No employees found</td></tr>
+                    <tr><td colSpan={9} className="text-center text-muted py-4">No employees found</td></tr>
                   ) : filteredEmployees.map((e) => (
                     <tr key={e.id}>
                       <td>{e.id}</td>
                       <td>{e.employeeCode || e.fullName || "-"}</td>
-                      <td>{e.account || "-"}</td>
-                      <td>{e.account.phone || "-"}</td>
+                      <td>{e.account?.email || "-"}</td>
+                      {/* <td>{e.account.phone || "-"}</td> */}
                       <td>{e.position || "-"}</td>
                       <td>{e.department || "-"}</td>
                       <td>{e.salary || "-"}</td>
