@@ -93,9 +93,9 @@ export default function Booking(){
         guests: Number(form.guests),
         // Gửi đủ alias để BE map được
         checkIn: form.checkIn,
-        checkOut: form.checkOut,
-        checkIn: form.checkIn,
         checkOut: form.checkOut
+        // checkIn: form.checkIn,
+        // checkOut: form.checkOut
         }
       // BE: POST /api/bookings -> BookingResponse
       const { data } = await axios.post('/bookings', payload)

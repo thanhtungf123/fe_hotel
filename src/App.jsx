@@ -18,7 +18,7 @@ import Admin from './pages/Admin'
 import ShowCreateAccount from './pages/admin/ShowCreateAccount'
 import ShowEditAccount from './pages/admin/ShowEditAccount'
 import CancelRequests from './pages/admin/CancelRequests'
-import ShowCreateEmployee from './pages/admin/ShowCreateEmployee.jsx'
+import ShowCreateEmployee from './pages/admin/ShowCreateEmployee'
 
 // --- Booking ---
 import Booking from './pages/Booking'
