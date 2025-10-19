@@ -20,7 +20,7 @@ import ShowEditAccount from './pages/admin/ShowEditAccount'
 import CancelRequests from './pages/admin/CancelRequests'
 import ShowCreateEmployee from './pages/admin/ShowCreateEmployee'
 import ShowEditEmployee from './pages/admin/ShowEditEmployee'
-
+import Employee from './pages/Employee'
 // --- Booking ---
 import Booking from './pages/Booking'
 
@@ -53,6 +53,7 @@ export default function App(){
         <Route path="/admin/cancel-requests" element={<CancelRequests />} />
         <Route path="/admin/employee/create" element={<ShowCreateEmployee />} />
         <Route path="/admin/employees/:id" element={<ShowEditEmployee />} />
+        <Route path="/employee" element={<Employee />} />
       </Routes>
       <Footer />
     </div>
