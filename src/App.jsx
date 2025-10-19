@@ -21,6 +21,8 @@ import CancelRequests from './pages/admin/CancelRequests'
 import ShowCreateEmployee from './pages/admin/ShowCreateEmployee'
 import ShowEditEmployee from './pages/admin/ShowEditEmployee'
 import Employee from './pages/Employee'
+import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
+import ShowAccountHistory from './pages/admin/ShowAccountHistory'
 // --- Booking ---
 import Booking from './pages/Booking'
 
@@ -54,6 +56,8 @@ export default function App(){
         <Route path="/admin/employee/create" element={<ShowCreateEmployee />} />
         <Route path="/admin/employees/:id" element={<ShowEditEmployee />} />
         <Route path="/employee" element={<Employee />} />
+        <Route path="/employee/account/create" element={<ShowCreateAccountEmployee />} />
+        <Route path="/admin/accountHistory/:id" element={<ShowAccountHistory />} />
       </Routes>
       <Footer />
     </div>

@@ -153,9 +153,9 @@ export default function Employee() {
     const val = norm(label);
     const variant =
       val.includes("active") ? "success" :
-      val.includes("pending") ? "warning" :
-      val.includes("disabled") || val.includes("banned") ? "secondary" :
-      "info";
+        val.includes("pending") ? "warning" :
+          val.includes("disabled") || val.includes("banned") ? "secondary" :
+            "info";
     return <Badge bg={variant} className="text-uppercase">{label}</Badge>;
   };
 
@@ -218,6 +218,9 @@ export default function Employee() {
                     <td className="text-capitalize">{roleLabel || "customer"}</td>
                     <td><StatusBadge value={a.status} isActive={a.isActive} /></td>
                     <td className="text-nowrap">
+                      <Button as={Link} to={`/admin/accountHistory/${a.id}`} size="sm" variant="outline-info" className="me-2">
+                        History
+                      </Button>
                       <Button as={Link} to={`/employee/accounts/${a.id}`} size="sm" variant="outline-secondary" className="me-2">
                         Edit
                       </Button>
