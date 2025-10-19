@@ -36,10 +36,10 @@ export default function Admin() {
     }
     return typeof rn === "string" ? rn.toLowerCase() : undefined;
   };
-  
+
   const roleName = getRoleName();
-// ---- useEffect (hooks phải trước return)
-// ---- Fetch data (điều chỉnh endpoint phù hợp BE của bạn)
+  // ---- useEffect (hooks phải trước return)
+  // ---- Fetch data (điều chỉnh endpoint phù hợp BE của bạn)
   useEffect(() => {
     let alive = true;
 
@@ -74,14 +74,14 @@ export default function Admin() {
     loadAccounts();
     loadEmployees();
 
-console.log("📊 Accounts state:", accounts);
-console.log("🔍 Filtered accounts:", filteredAccounts);
-console.log("❓ Why not showing?", {
-  accountsLength: accounts.length,
-  filteredLength: filteredAccounts.length,
-  loading: loading.accounts,
-  error: error.accounts
-});
+    console.log("📊 Accounts state:", accounts);
+    console.log("🔍 Filtered accounts:", filteredAccounts);
+    console.log("❓ Why not showing?", {
+      accountsLength: accounts.length,
+      filteredLength: filteredAccounts.length,
+      loading: loading.accounts,
+      error: error.accounts
+    });
 
 
 
@@ -124,131 +124,104 @@ console.log("❓ Why not showing?", {
   }, [employees, qEmp]);
 
   // ---- Guard: only Admin (role === "admin") can view this page
-  
-// Debug logging
+
+  // Debug logging
   console.log("🔐 User:", user);
   console.log("👤 Role:", roleName);
   console.log("📊 Accounts:", accounts);
   console.log("👥 Employees:", employees);
-  
+
   if (!user?.token) return <Navigate to="/login" replace />;
   if (roleName !== "admin") return <Navigate to="/" replace />;
 
   // ---- Handlers
-const handleDeleteAccount = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this account?")) return;
+  const handleDeleteAccount = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this account?")) return;
 
-  // helper hiển thị lỗi rõ ràng
-  const showError = (err) => {
-    const msg =
-      err?.response?.data?.message ||
-      err?.response?.data ||
-      err?.message ||
-      "Unknown error";
-    alert(`Delete failed: ${msg}`);
-  };
+    // helper hiển thị lỗi rõ ràng
+    const showError = (err) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+      alert(`Delete failed: ${msg}`);
+    };
 
-  
-
-  try {
-    // Thử endpoint chuẩn Admin trước
-    let res;
     try {
-      res = await axios.delete(`/admin/accounts/${id}`);
-    } catch (e) {
-      // Fallback nếu BE không có /admin/... (405/404)
-      const code = e?.response?.status;
-      if (code === 404 || code === 405) {
-        res = await axios.delete(`/accounts/${id}`);
-      } else {
-        throw e;
+      // Thử endpoint chuẩn Admin trước
+      let res;
+      try {
+        res = await axios.delete(`/admin/accounts/${id}`);
+      } catch (e) {
+        // Fallback nếu BE không có /admin/... (405/404)
+        const code = e?.response?.status;
+        if (code === 404 || code === 405) {
+          res = await axios.delete(`/accounts/${id}`);
+        } else {
+          throw e;
+        }
       }
-    }
 
-    // Thành công (200/204)
-    // Cập nhật UI tại chỗ (không cần navigate)
-    setAccounts((prev) => prev.filter((a) => a.id !== id));
-  } catch (error) {
-    const code = error?.response?.status;
-
-    if (code === 401 || code === 403) {
-      alert("You are not authorized to delete this account.");
-      return;
-    }
-    if (code === 404) {
-      alert("Account not found. It may have been deleted already.");
-      // Có thể loại bỏ khỏi UI luôn
+      // Thành công (200/204)
+      // Cập nhật UI tại chỗ (không cần navigate)
       setAccounts((prev) => prev.filter((a) => a.id !== id));
-      return;
-    }
-    if (code === 409) {
-      // thường là ràng buộc FK (account đang được link với employee/payments/...)
-      alert("Cannot delete: this account is referenced by other data (e.g., an employee). Unlink/remove dependencies first.");
-      return;
-    }
+    } catch (error) {
+      const code = error?.response?.status;
 
-    console.error("Failed to delete account", error);
-    showError(error);
+      if (code === 401 || code === 403) {
+        alert("You are not authorized to delete this account.");
+        return;
+      }
+      if (code === 404) {
+        alert("Account not found. It may have been deleted already.");
+        // Có thể loại bỏ khỏi UI luôn
+        setAccounts((prev) => prev.filter((a) => a.id !== id));
+        return;
+      }
+      if (code === 409) {
+        // thường là ràng buộc FK (account đang được link với employee/payments/...)
+        alert("Cannot delete: this account is referenced by other data (e.g., an employee). Unlink/remove dependencies first.");
+        return;
+      }
+
+      console.error("Failed to delete account", error);
+      showError(error);
+    }
+  };
+
+  const handleDeleteEmployee = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this employee?")) return;
+
+    const showError = (err) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+      alert(`Delete failed: ${msg}`);
+    };
+
+    try {
+    // Gọi API cập nhật trạng thái
+    // await axios.put(`/admin/employees/${id}`, { status: "terminated" });
+    await axios.delete(`/admin/employees/${id}`)
+
+    // Cập nhật UI tại chỗ
+    setEmployees((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, status: "terminated" } : it))
+    );
+  } catch (e) {
+    alert(`Deactivate failed: ${errMsg(e)}`);
   }
-};
-
-  // ---- Create handlers
-  const submitCreateAccount = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      // Gửi đúng field theo entity BE
-      const payload = {
-        fullName: accForm.fullName?.trim(),
-        email: accForm.email?.trim(),
-        phoneNumber: accForm.phoneNumber?.trim(),
-        passwordHash: accForm.passwordHash || "",
-        isActive: !!accForm.isActive,
-        // role: { id: Number(accForm.roleId) } // nếu BE yêu cầu role object
-      };
-      await axios.post("/admin/accounts", payload);
-      setShowCreateAcc(false);
-      setAccForm({ fullName: "", email: "", phoneNumber: "", passwordHash: "", isActive: true });
-      await reloadAccounts();
-    } catch (err) {
-      alert(err?.response?.data || err.message);
-    } finally {
-      setSubmitting(false);
-    }
   };
 
-  const submitCreateEmployee = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      // BE không dùng DTO → nhận trực tiếp entity fields
-      const payload = {
-        position: empForm.position?.trim() || null,
-        department: empForm.department?.trim() || null,
-        hireDate: empForm.hireDate || null,
-        salary: empForm.salary ? Number(empForm.salary) : null,
-        status: empForm.status?.trim() || null
-      };
-      const params = {};
-      if (empForm.accountId) params.accountId = Number(empForm.accountId);
-
-      await axios.post("/employees", payload, { params });
-      setShowCreateEmp(false);
-      setEmpForm({ position: "", department: "", hireDate: "", salary: "", status: "Active", accountId: "" });
-      await reloadEmployees();
-    } catch (err) {
-      alert(err?.response?.data || err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  
 
 
-  
+
+
   // ---- StatusBadge component
-  
+
 
   const StatusBadge = ({ value }) => {
     const val = (value ?? "").toString().toLowerCase();
@@ -265,7 +238,7 @@ const handleDeleteAccount = async (id) => {
       <Row className="mb-3">
         <Col>
           <h3 className="mb-0">Admin Dashboard</h3>
-          <div className="text-muted">Manage Accounts & Employees</div>
+          <div className="text-muted">Manage Customer & Employees</div>
         </Col>
         <Col className="text-end">
           <Button as={Link} to="/employee" variant="outline-secondary" className="me-2">Go to Employee</Button>
@@ -276,7 +249,7 @@ const handleDeleteAccount = async (id) => {
 
       <Tabs defaultActiveKey="accounts" id="admin-tabs" className="mb-4">
         {/* -------- Accounts -------- */}
-        <Tab eventKey="accounts" title={`Accounts (${accounts.length})`}>
+        <Tab eventKey="accounts" title={`Customer (${accounts.length})`}>
           <Row className="mb-3">
             <Col md={6}>
               <Form.Control
@@ -366,7 +339,7 @@ const handleDeleteAccount = async (id) => {
                     <th style={{ width: 80 }}>ID</th>
                     <th>Employee ID</th>
                     <th>Email</th>
-                    {/* <th>Phone</th> */}
+                    <th>Phone</th>
                     <th>Position</th>
                     <th>Department</th>
                     <th>Salary</th>
@@ -383,15 +356,15 @@ const handleDeleteAccount = async (id) => {
                       <td>{e.id}</td>
                       <td>{e.employeeCode || e.fullName || "-"}</td>
                       <td>{e.account?.email || "-"}</td>
-                      {/* <td>{e.account.phone || "-"}</td> */}
+                      <td>{e.account?.phone || "-"}</td>
                       <td>{e.position || "-"}</td>
                       <td>{e.department || "-"}</td>
                       <td>{e.salary || "-"}</td>
                       <td>{e.hireDate || "-"}</td>
                       <td><StatusBadge value={e.status} /></td>
                       <td className="text-nowrap">
-                        <Button as={Link} to={`/employee/${e.id}/delete`} size="sm" variant="outline-primary" className="me-2">Deactive</Button>
-                        <Button as={Link} to={`/employee/${e.id}/edit`} size="sm" variant="outline-secondary">Edit</Button>
+                        <Button size="sm" variant="outline-warning" className="me-2" onClick={() => handleDeleteEmployee(e.id)}> Deactivate </Button>
+                        <Button as={Link} to={`/admin/employees/${e.id}`} size="sm" variant="outline-secondary">Edit</Button>
                       </td>
                     </tr>
                   ))}
