@@ -92,7 +92,119 @@ export default function RoomDetail() {
             ))}
           </div>
 
-          {/* ...các card mô tả/tiện nghi/đánh giá... */}
+          {/* Mô tả phòng */}
+          <Card className="card-soft mt-3">
+            <Card.Body>
+              <Card.Title className="h5">Mô tả</Card.Title>
+              <p className="text-muted">{data?.description || 'Phòng nghỉ hiện đại, trang bị đầy đủ tiện nghi cao cấp.'}</p>
+            </Card.Body>
+          </Card>
+
+          {/* Điểm nổi bật */}
+          {data?.highlights && data.highlights.length > 0 && (
+            <Card className="card-soft mt-3">
+              <Card.Body>
+                <Card.Title className="h5">Điểm nổi bật</Card.Title>
+                <Row>
+                  {data.highlights.map((h, i) => (
+                    <Col md={6} key={i} className="mb-2">
+                      <div className="d-flex align-items-start gap-2">
+                        <span className="text-success">✓</span>
+                        <span>{h}</span>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              </Card.Body>
+            </Card>
+          )}
+
+          {/* Tiện nghi */}
+          {data?.amenities && Object.keys(data.amenities).length > 0 && (
+            <Card className="card-soft mt-3">
+              <Card.Body>
+                <Card.Title className="h5">Tiện nghi phòng</Card.Title>
+                {Object.entries(data.amenities).map(([category, items]) => (
+                  <div key={category} className="mb-3">
+                    <div className="fw-semibold mb-2">{category}</div>
+                    <Row>
+                      {items.map((item, i) => (
+                        <Col md={6} key={i} className="mb-2">
+                          <div className="d-flex align-items-start gap-2">
+                            <span className="text-muted">•</span>
+                            <span className="small">{item}</span>
+                          </div>
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                ))}
+              </Card.Body>
+            </Card>
+          )}
+
+          {/* Đánh giá */}
+          <Card className="card-soft mt-3">
+            <Card.Body>
+              <Card.Title className="h5 d-flex justify-content-between align-items-center">
+                <span>Đánh giá của khách</span>
+                <Badge bg="warning" text="dark" className="fs-6">
+                  ⭐ {room.rating ?? 4.7}
+                </Badge>
+              </Card.Title>
+              
+              {/* Rating histogram */}
+              {data?.ratingHistogram && (
+                <div className="mb-3">
+                  {Object.entries(data.ratingHistogram).sort((a,b) => b[0]-a[0]).map(([star, count]) => (
+                    <div key={star} className="d-flex align-items-center gap-2 mb-2">
+                      <span className="small" style={{width: '50px'}}>{star} sao</span>
+                      <div className="flex-grow-1 bg-light rounded" style={{height: '8px', overflow: 'hidden'}}>
+                        <div 
+                          className="bg-warning h-100" 
+                          style={{width: `${(count / (room.reviews || 1)) * 100}%`}}
+                        />
+                      </div>
+                      <span className="small text-muted" style={{width: '40px', textAlign: 'right'}}>{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Sample reviews */}
+              <div className="mt-3">
+                {data?.reviews && data.reviews.length > 0 ? (
+                  data.reviews.map((review, i) => (
+                    <div key={i} className="mb-3 pb-3 border-bottom">
+                      <div className="d-flex align-items-start gap-3">
+                        {review.avatarUrl && (
+                          <img 
+                            src={review.avatarUrl} 
+                            alt={review.userName} 
+                            className="rounded-circle"
+                            style={{width: '48px', height: '48px', objectFit: 'cover'}}
+                          />
+                        )}
+                        <div className="flex-grow-1">
+                          <div className="d-flex align-items-center gap-2 mb-1">
+                            <div className="fw-semibold">{review.userName}</div>
+                            <Badge bg="warning" text="dark">⭐ {review.rating}</Badge>
+                          </div>
+                          <p className="small mb-1">{review.comment}</p>
+                          <div className="small text-muted">{review.date}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted py-3">
+                    <p className="mb-2">Chưa có đánh giá nào</p>
+                    <p className="small">Hãy là người đầu tiên đánh giá phòng này!</p>
+                  </div>
+                )}
+              </div>
+            </Card.Body>
+          </Card>
         </Col>
 
         {/* Booking box */}

@@ -4,6 +4,7 @@ import { Container, Row, Col, Table, Spinner, Alert, Form, Badge, Tabs, Tab, But
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import axios from "../api/axiosInstance";
 import { useAuth } from "../store/auth";
+import RoomManagement from "../components/admin/RoomManagement";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -334,6 +335,11 @@ const handleDeleteAccount = async (id) => {
               </Table>
             </div>
           )}
+        </Tab>
+
+        {/* -------- Rooms -------- */}
+        <Tab eventKey="rooms" title="Quản lý phòng">
+          <RoomManagement />
         </Tab>
 
         {/* -------- Employees -------- */}

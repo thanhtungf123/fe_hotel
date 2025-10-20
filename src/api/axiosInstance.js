@@ -15,7 +15,12 @@ axiosInstance.interceptors.request.use((config) => {
       const auth = JSON.parse(raw);
       if (auth?.token) {
         config.headers["X-Auth-Token"] = auth.token;
+        console.log(`🔑 Token added to ${config.method?.toUpperCase()} ${config.url}`);
+      } else {
+        console.warn("⚠️ No token found in auth object");
       }
+    } else {
+      console.warn("⚠️ No auth data in storage");
     }
   } catch (e) {
     console.warn("Auth parse error", e);
@@ -31,6 +36,21 @@ axiosInstance.interceptors.response.use(
     if (!err.response) {
       err.response = { data: { message: "Không thể kết nối máy chủ." }, status: 0 };
     }
+    
+    // Handle 401 Unauthorized
+    if (err.response?.status === 401) {
+      console.error("❌ 401 Unauthorized - Token invalid or missing");
+      console.log("Current auth:", sessionStorage.getItem("auth"));
+      
+      // Optionally redirect to login
+      // window.location.href = '/login';
+    }
+    
+    // Handle 403 Forbidden
+    if (err.response?.status === 403) {
+      console.error("❌ 403 Forbidden - Insufficient permissions (not admin?)");
+    }
+    
     return Promise.reject(err);
   }
 );

@@ -75,7 +75,24 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
               }}
             />
           ))}
-          <div className="d-grid"><Button variant="light" className="border mt-2" onClick={onClear}>Xóa bộ lọc</Button></div>
+        </Card.Body>
+      </Card>
+
+      <Card className="card-soft mb-3">
+        <Card.Body>
+          <Card.Title className="h6">Trạng thái phòng</Card.Title>
+          {['available', 'occupied', 'maintenance'].map(s=>(
+            <Form.Check key={s} type="checkbox" className="mb-2"
+              label={s === 'available' ? '✅ Còn trống' : s === 'occupied' ? '🔒 Đã đặt' : '🔧 Bảo trì'}
+              checked={filters.status?.includes(s)||false}
+              onChange={e=>{
+                const set = new Set(filters.status||[])
+                e.target.checked ? set.add(s) : set.delete(s)
+                update('status', Array.from(set))
+              }}
+            />
+          ))}
+          <div className="d-grid mt-3"><Button variant="light" className="border" onClick={onClear}>Xóa bộ lọc</Button></div>
         </Card.Body>
       </Card>
     </div>
