@@ -22,22 +22,38 @@ export default function Search(){
   const [view, setView] = useState('list')
   const [sort, setSort] = useState('priceAsc')
   const [filters, setFilters] = useState({
-    priceMax: 10000000, types: [], amenities: [], guests: 2, checkin:'', checkout:''
+    priceMax: 10000000, priceMin: 1000000, types: [], amenities: [], status: [], guests: 2, checkin:'', checkout:''
   })
 
   useEffect(()=>{
     setLoading(true)
+    
+    // Nếu user chọn ngày check-in và check-out => gọi API availability
+    // Nếu không => gọi API search thông thường
+    const hasDateFilter = filters.checkin && filters.checkout
+    const endpoint = hasDateFilter ? '/rooms/availability' : '/rooms/search'
+    
     const params = new URLSearchParams({
       priceMax: String(filters.priceMax ?? ''),
+      priceMin: String(filters.priceMin ?? ''),
       guests: String(filters.guests ?? ''),
-      types: (filters.types || []).join(','),
-      amenities: (filters.amenities || []).join(','),
       sort,
       page: '0',
       size: '50'
     })
+    
+    // Nếu có date filter => dùng API availability
+    if (hasDateFilter) {
+      params.set('checkIn', filters.checkin)
+      params.set('checkOut', filters.checkout)
+    } else {
+      // API search thì có thêm types, amenities, status
+      params.set('types', (filters.types || []).join(','))
+      params.set('amenities', (filters.amenities || []).join(','))
+      params.set('status', (filters.status || []).join(','))
+    }
 
-    const url = `${API}/rooms/search?${params.toString()}`
+    const url = `${API}${endpoint}?${params.toString()}`
     axios.get(url, { headers: { Accept: 'application/json' } })
       .then(r => {
         console.log('🔎 GET', r.request?.responseURL || url, r.data)
@@ -57,7 +73,7 @@ export default function Search(){
   }, [API, filters, sort])
 
   const rooms = useMemo(()=> raw ?? [], [raw])
-  const clearFilters = ()=> setFilters({ priceMax: 10000000, types: [], amenities: [], guests: 2, checkin:'', checkout:'' })
+  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 1000000, types: [], amenities: [], status: [], guests: 2, checkin:'', checkout:'' })
 
   return (
     <div className="py-4">
