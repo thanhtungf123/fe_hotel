@@ -22,7 +22,7 @@ export default function Search(){
   const [view, setView] = useState('list')
   const [sort, setSort] = useState('priceAsc')
   const [filters, setFilters] = useState({
-    priceMax: 10000000, priceMin: 1000000, types: [], amenities: [], status: [], guests: 2, checkin:'', checkout:''
+    priceMax: 10000000, priceMin: 1000, types: [], amenities: [], status: [], guests: 1, checkin:'', checkout:''
   })
 
   useEffect(()=>{
@@ -73,7 +73,7 @@ export default function Search(){
   }, [API, filters, sort])
 
   const rooms = useMemo(()=> raw ?? [], [raw])
-  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 1000000, types: [], amenities: [], status: [], guests: 2, checkin:'', checkout:'' })
+  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 1000, types: [], amenities: [], status: [], guests: 1, checkin:'', checkout:'' })
 
   return (
     <div className="py-4">

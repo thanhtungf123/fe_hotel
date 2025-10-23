@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { Container, Row, Col, Card, Form, Button, Alert, Badge } from 'react-bootstrap'
 import axios from '../api/axiosInstance'
+import PaymentButton from '../components/PaymentButton'   // ✅ Thêm dòng này
 
 const todayStr = (d = new Date()) => d.toISOString().slice(0,10)
 const addDays = (n) => {
@@ -17,17 +18,14 @@ export default function Booking(){
   const loc = useLocation()
   const nextUrl = `/booking/${id}`
 
-  // lấy auth từ localStorage
   const auth = (() => {
     try { return JSON.parse(localStorage.getItem('auth') || '{}') } catch { return {} }
   })()
 
-  // nếu chưa đăng nhập -> chuyển sang login kèm next
   useEffect(()=>{
     if (!auth?.token) {
       nav(`/login?next=${encodeURIComponent(nextUrl)}`, { replace: true })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const [loading, setLoading] = useState(true)
@@ -42,15 +40,12 @@ export default function Booking(){
   })
   const onChange = (e)=> setForm({ ...form, [e.target.name]: e.target.value })
 
-  // tải thông tin phòng để hiển thị tóm tắt
   useEffect(()=>{
     let mounted = true
     const API = (import.meta.env.VITE_API_BASE ?? '/api').replace(/\/$/, '')
     setLoading(true); setError('')
     axios.get(`${API}/rooms/${id}`, { headers: { Accept: 'application/json' } })
-      .then(res => {
-        if (mounted) setRoom(res.data?.room || null)
-      })
+      .then(res => { if (mounted) setRoom(res.data?.room || null) })
       .catch(err => setError(err?.response?.data?.message || err.message))
       .finally(()=> mounted && setLoading(false))
     return ()=> { mounted=false }
@@ -91,17 +86,11 @@ export default function Booking(){
       const payload = {
         roomId: Number(id),
         guests: Number(form.guests),
-        // Gửi đủ alias để BE map được
         checkIn: form.checkIn,
         checkOut: form.checkOut
-        // checkIn: form.checkIn,
-        // checkOut: form.checkOut
-        }
-      // BE: POST /api/bookings -> BookingResponse
+      }
       const { data } = await axios.post('/bookings', payload)
-      setSuccess(data) // {bookingId, totalPrice,...} (tuỳ BE)
-      // chuyển về chi tiết phòng hoặc trang chủ sau vài giây nếu muốn
-      // nav(`/rooms/${id}?booked=1`, { replace: true })
+      setSuccess(data) // { bookingId, status, totalVnd }
     }catch(err){
       setError(err?.response?.data?.message || err.message)
     }finally{
@@ -114,17 +103,28 @@ export default function Booking(){
       <h2 className="fw-bold mb-3">Đặt phòng</h2>
 
       {!auth?.token && (
-        <Alert variant="warning">
-          Bạn cần đăng nhập để đặt phòng. Đang chuyển hướng…
-        </Alert>
+        <Alert variant="warning">Bạn cần đăng nhập để đặt phòng. Đang chuyển hướng…</Alert>
       )}
 
       {loading && <Alert variant="info">Đang tải thông tin phòng…</Alert>}
       {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
+
+      {/* ✅ Hiển thị thông báo + nút thanh toán sau khi đặt phòng */}
       {success && (
         <Alert variant="success" className="mb-3">
-          Đặt phòng thành công! Mã đơn: <strong>{success.bookingId ?? '—'}</strong> — Tổng tiền:{" "}
-          <strong>{(success.totalPrice ?? total).toLocaleString('vi-VN')}₫</strong>
+          <div>
+            ✅ Đặt phòng thành công!<br />
+            Mã đơn: <strong>{success.bookingId ?? '—'}</strong><br />
+            Tổng tiền: <strong>{(success.totalVnd ?? total).toLocaleString('vi-VN')}₫</strong>
+          </div>
+
+          {/* Thêm nút thanh toán thật */}
+          <div className="mt-3">
+            <PaymentButton 
+              bookingId={success.bookingId} 
+              totalPrice={success.totalVnd ?? total} 
+            />
+          </div>
         </Alert>
       )}
 
@@ -140,8 +140,8 @@ export default function Booking(){
                     <Form.Control
                       type="date"
                       min={todayStr()}
-                      name="checkInDate"
-                      value={form.checkInDate}
+                      name="checkIn"
+                      value={form.checkIn}
                       onChange={onChange}
                       required
                     />
@@ -150,9 +150,9 @@ export default function Booking(){
                     <Form.Label className="small">Ngày trả phòng</Form.Label>
                     <Form.Control
                       type="date"
-                      min={form.checkInDate || todayStr()}
-                      name="checkOutDate"
-                      value={form.checkOutDate}
+                      min={form.checkIn || todayStr()}
+                      name="checkOut"
+                      value={form.checkOut}
                       onChange={onChange}
                       required
                     />
@@ -185,7 +185,12 @@ export default function Booking(){
                   />
                 </Form.Group>
 
-                <Button type="submit" className="w-100 mt-3" variant="danger" disabled={submitting || !auth?.token}>
+                <Button
+                  type="submit"
+                  className="w-100 mt-3"
+                  variant="danger"
+                  disabled={submitting || !auth?.token}
+                >
                   {submitting ? 'Đang xử lý…' : 'Xác nhận đặt phòng'}
                 </Button>
               </Form>

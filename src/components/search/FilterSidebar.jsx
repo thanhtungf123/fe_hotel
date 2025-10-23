@@ -35,12 +35,12 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
       <Card className="card-soft mb-3">
         <Card.Body>
           <Card.Title className="h6">Khoảng giá</Card.Title>
-          <Form.Range min={1000000} max={10000000} step={100000}
+          <Form.Range min={1000} max={10000000} step={100000}
             value={filters.priceMax}
             onChange={e=>update('priceMax', Number(e.target.value))}
           />
           <div className="d-flex justify-content-between text-muted small">
-            <div>{(1000000).toLocaleString('vi-VN')}₫</div>
+            <div>{(1000).toLocaleString('vi-VN')}₫</div>
             <div>{(filters.priceMax).toLocaleString('vi-VN')}₫</div>
           </div>
         </Card.Body>

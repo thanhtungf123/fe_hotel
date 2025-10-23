@@ -23,8 +23,14 @@ import ShowEditEmployee from './pages/admin/ShowEditEmployee'
 import Employee from './pages/Employee'
 import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
 import ShowAccountHistory from './pages/admin/ShowAccountHistory'
+
 // --- Booking ---
 import Booking from './pages/Booking'
+
+// --- Payment ---
+import PaymentSuccess from './pages/payment/PaymentSuccess'
+import PaymentCancel from './pages/payment/PaymentCancel'
+import PaymentHistory from './pages/payment/PaymentHistory'
 
 export default function App(){
   return (
@@ -58,6 +64,11 @@ export default function App(){
         <Route path="/employee" element={<Employee />} />
         <Route path="/employee/account/create" element={<ShowCreateAccountEmployee />} />
         <Route path="/admin/accountHistory/:id" element={<ShowAccountHistory />} />
+
+        {/* Payment */}
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
+        <Route path="/payment/history" element={<PaymentHistory />} />
       </Routes>
       <Footer />
     </div>
