@@ -82,6 +82,9 @@ export default function TopNavbar() {
                     <Dropdown.Item as={Link} to="/admin/cancel-requests">
                       🛎 Duyệt huỷ đặt phòng
                     </Dropdown.Item>
+                    <Dropdown.Item as={Link} to="/admin/payment-review">
+                      💳 Duyệt thanh toán
+                    </Dropdown.Item>
                   </>
                 )}
 
