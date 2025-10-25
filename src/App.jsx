@@ -23,6 +23,7 @@ import ShowEditEmployee from './pages/admin/ShowEditEmployee'
 import Employee from './pages/Employee'
 import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
 import ShowAccountHistory from './pages/admin/ShowAccountHistory'
+import ShowCreateServices from './components/admin/ShowCreateServices'
 // --- Booking ---
 import Booking from './pages/Booking'
 
@@ -58,6 +59,7 @@ export default function App(){
         <Route path="/employee" element={<Employee />} />
         <Route path="/employee/account/create" element={<ShowCreateAccountEmployee />} />
         <Route path="/admin/accountHistory/:id" element={<ShowAccountHistory />} />
+        <Route path="/admin/service/create" element={<ShowCreateServices />} />
       </Routes>
       <Footer />
     </div>
