@@ -21,7 +21,7 @@ export default function Booking(){
   const [error, setError] = useState('')
   const [room, setRoom] = useState(null)
 
-  const [form, setForm] = useState({ checkIn: addDays(1), checkOut: addDays(2), guests: 2, specialRequests: '' })
+  const [form, setForm] = useState({ checkIn: addDays(1), checkOut: addDays(2), guests: 1, specialRequests: '' })
   const onChange = (e)=> setForm({ ...form, [e.target.name]: e.target.value })
 
   useEffect(()=>{
@@ -63,6 +63,11 @@ export default function Booking(){
     if (capacity && Number(form.guests) > capacity) return `Số khách tối đa: ${capacity}`
     if (auth?.role && auth.role.toLowerCase() !== 'customer') return 'Chỉ tài khoản khách hàng mới được đặt phòng'
     if (!kyc.fullName) return 'Vui lòng nhập họ tên'
+    if (!kyc.phoneNumber) return 'Vui lòng nhập số điện thoại';
+    if (!kyc.nationalIdNumber) return 'Vui lòng nhập số CCCD';
+    if (!kyc.dateOfBirth) return 'Vui lòng chọn ngày sinh';
+    if (!kyc.idFrontUrl) return 'Vui lòng tải ảnh CCCD mặt trước';
+    if (!kyc.idBackUrl)  return 'Vui lòng tải ảnh CCCD mặt sau';
     return ''
   }
 
@@ -158,32 +163,75 @@ export default function Booking(){
                 <hr className="my-3"/>
                 <h6>Thông tin khách nhận phòng</h6>
                 <Row className="g-2">
-                  <Col md={6}><Form.Label>Họ và tên</Form.Label>
-                    <Form.Control value={kyc.fullName} onChange={e=>setKyc({...kyc, fullName:e.target.value})} required/></Col>
-                  <Col md={3}><Form.Label>Ngày sinh</Form.Label>
-                    <Form.Control type="date" value={kyc.dateOfBirth} onChange={e=>setKyc({...kyc, dateOfBirth:e.target.value})}/></Col>
-                  <Col md={3}><Form.Label>Giới tính</Form.Label>
-                    <Form.Select value={kyc.gender} onChange={e=>setKyc({...kyc, gender:e.target.value})}>
-                      <option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác</option>
-                    </Form.Select></Col>
-                  <Col md={6}><Form.Label>Số điện thoại</Form.Label>
-                    <Form.Control value={kyc.phoneNumber} onChange={e=>setKyc({...kyc, phoneNumber:e.target.value})}/></Col>
-                  <Col md={6}><Form.Label>Số CCCD</Form.Label>
-                    <Form.Control value={kyc.nationalIdNumber} onChange={e=>setKyc({...kyc, nationalIdNumber:e.target.value})}/></Col>
-                  <Col md={6}><Form.Label>Ảnh CCCD mặt trước (URL)</Form.Label>
-                    <Form.Control value={kyc.idFrontUrl} onChange={e=>setKyc({...kyc, idFrontUrl:e.target.value})}/></Col>
-                  <Col md={6}><Form.Label>Ảnh CCCD mặt sau (URL)</Form.Label>
-                    <Form.Control value={kyc.idBackUrl} onChange={e=>setKyc({...kyc, idBackUrl:e.target.value})}/></Col>
-                  <Col md={6}><Form.Label>Chủ TK hoàn tiền</Form.Label>
-                    <Form.Control value={kyc.bankAccountName} onChange={e=>setKyc({...kyc, bankAccountName:e.target.value})}/></Col>
-                  <Col md={6}><Form.Label>Số TK</Form.Label>
-                    <Form.Control value={kyc.bankAccountNumber} onChange={e=>setKyc({...kyc, bankAccountNumber:e.target.value})}/></Col>
-                  <Col md={4}><Form.Label>Ngân hàng</Form.Label>
-                    <Form.Control value={kyc.bankName} onChange={e=>setKyc({...kyc, bankName:e.target.value})}/></Col>
-                  <Col md={4}><Form.Label>Mã NH</Form.Label>
-                    <Form.Control value={kyc.bankCode} onChange={e=>setKyc({...kyc, bankCode:e.target.value})}/></Col>
-                  <Col md={4}><Form.Label>Chi nhánh</Form.Label>
-                    <Form.Control value={kyc.bankBranch} onChange={e=>setKyc({...kyc, bankBranch:e.target.value})}/></Col>
+                  <Col md={6}>
+                    <Form.Label>Họ và tên</Form.Label>
+                    <Form.Control value={kyc.fullName}
+                      onChange={e=>setKyc({...kyc, fullName:e.target.value})}
+                      required/>
+                  </Col>
+
+                  <Col md={3}>
+                    <Form.Label>Ngày sinh</Form.Label>
+                    <Form.Control type="date" value={kyc.dateOfBirth}
+                      onChange={e=>setKyc({...kyc, dateOfBirth:e.target.value})}
+                      required/>
+                  </Col>
+
+                  <Col md={3}>
+                    <Form.Label>Giới tính</Form.Label>
+                    <Form.Select value={kyc.gender}
+                      onChange={e=>setKyc({...kyc, gender:e.target.value})}
+                      required>
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
+                    </Form.Select>
+                  </Col>
+
+                  <Col md={6}>
+                    <Form.Label>Số điện thoại</Form.Label>
+                    <Form.Control value={kyc.phoneNumber}
+                      onChange={e=>setKyc({...kyc, phoneNumber:e.target.value})}
+                      required/>
+                  </Col>
+
+                  <Col md={6}>
+                    <Form.Label>Số CCCD</Form.Label>
+                    <Form.Control value={kyc.nationalIdNumber}
+                      onChange={e=>setKyc({...kyc, nationalIdNumber:e.target.value})}
+                      required/>
+                  </Col>
+
+                  {/* Ảnh CCCD upload từ máy */}
+                  <Col md={6}>
+                    <Form.Label>Ảnh CCCD mặt trước</Form.Label>
+                    <Form.Control type="file" accept="image/*" required
+                      onChange={async (e)=>{
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        try{
+                          const { uploadFile } = await import('../api/upload');
+                          const { url } = await uploadFile(f);
+                          setKyc(k => ({ ...k, idFrontUrl: url }));
+                        }catch(err){ alert('Upload ảnh mặt trước thất bại: ' + (err?.response?.data?.message || err.message)); }
+                      }}/>
+                    {kyc.idFrontUrl && <div className="mt-2"><img src={kyc.idFrontUrl} alt="CCCD trước" style={{height:80,borderRadius:6}}/></div>}
+                  </Col>
+
+                  <Col md={6}>
+                    <Form.Label>Ảnh CCCD mặt sau</Form.Label>
+                    <Form.Control type="file" accept="image/*" required
+                      onChange={async (e)=>{
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        try{
+                          const { uploadFile } = await import('../api/upload');
+                          const { url } = await uploadFile(f);
+                          setKyc(k => ({ ...k, idBackUrl: url }));
+                        }catch(err){ alert('Upload ảnh mặt sau thất bại: ' + (err?.response?.data?.message || err.message)); }
+                      }}/>
+                    {kyc.idBackUrl && <div className="mt-2"><img src={kyc.idBackUrl} alt="CCCD sau" style={{height:80,borderRadius:6}}/></div>}
+                  </Col>
                 </Row>
 
                 <hr className="my-3"/>
