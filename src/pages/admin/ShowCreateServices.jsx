@@ -15,7 +15,7 @@ import axios from "../../api/axiosInstance";
  *  - onCreated:   fn      called with created service
  */
 export default function ShowCreateServices({
-  endpoint = "/admin/services",
+  endpoint = "/admin/service/create",
   fallback = "/services",
   backTo = "/admin",
   onCreated,

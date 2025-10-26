@@ -23,7 +23,7 @@ import ShowEditEmployee from './pages/admin/ShowEditEmployee'
 import Employee from './pages/Employee'
 import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
 import ShowAccountHistory from './pages/admin/ShowAccountHistory'
-import ShowCreateServices from './components/admin/ShowCreateServices'
+import ShowCreateServices from './pages/admin/ShowCreateServices'
 // --- Booking ---
 import Booking from './pages/Booking'
 
