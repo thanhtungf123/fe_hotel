@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import axios from "../api/axiosInstance";
 import { useAuth } from "../store/auth";
 import RoomManagement from "../components/admin/RoomManagement";
+import ServicesManagement from "../components/admin/ServicesManagement";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -378,6 +379,10 @@ export default function Admin() {
               </Table>
             </div>
           )}
+        </Tab>
+        {/* -------- Employees -------- */}
+        <Tab eventKey="services" title="Service Management">
+            <ServicesManagement />
         </Tab>
       </Tabs>
     </Container>
