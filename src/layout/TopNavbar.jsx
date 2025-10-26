@@ -44,13 +44,6 @@ export default function TopNavbar() {
             <Nav.Link href="#amenities">Tiện nghi</Nav.Link>
             <Nav.Link href="#about">Giới thiệu</Nav.Link>
             <Nav.Link href="#contact">Liên hệ</Nav.Link>
-
-            {/* Mục quản trị (chỉ Staff/Admin) */}
-            {isStaff && (
-              <Nav.Item className="ms-lg-2">
-                <Nav.Link as={Link} to="/admin/cancel-requests">Duyệt huỷ</Nav.Link>
-              </Nav.Item>
-            )}
           </Nav>
 
           {user?.token ? (
@@ -88,6 +81,9 @@ export default function TopNavbar() {
                     </Dropdown.Item>
                     <Dropdown.Item as={Link} to="/admin/cancel-requests">
                       🛎 Duyệt huỷ đặt phòng
+                    </Dropdown.Item>
+                    <Dropdown.Item as={Link} to="/admin/payment-review">
+                      💳 Duyệt thanh toán
                     </Dropdown.Item>
                   </>
                 )}

@@ -23,11 +23,18 @@ import ShowEditEmployee from './pages/admin/ShowEditEmployee'
 import Employee from './pages/Employee'
 import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
 import ShowAccountHistory from './pages/admin/ShowAccountHistory'
+import PaymentReview from './pages/admin/PaymentReview'
 import ShowCreateServices from './pages/admin/ShowCreateServices'
+
 // --- Booking ---
 import Booking from './pages/Booking'
 
-export default function App(){
+// --- Payment ---
+import PaymentSuccess from './pages/payment/PaymentSuccess'
+import PaymentCancel from './pages/payment/PaymentCancel'
+import PaymentHistory from './pages/payment/PaymentHistory'
+
+export default function App() {
   return (
     <div>
       <TopNavbar />
@@ -48,9 +55,9 @@ export default function App(){
         <Route path="/account/bookings" element={<BookingHistory />} />
         <Route path="/account/profile" element={<Profile />} />
         <Route path="/account/password" element={<ChangePassword />} />
-        
+
         {/* Admin Management */}
-        <Route path="/admin" element={<Admin />} /> 
+        <Route path="/admin" element={<Admin />} />
         <Route path="/admin/account/create" element={<ShowCreateAccount />} />
         <Route path="/admin/accounts/:id" element={<ShowEditAccount />} />
         <Route path="/admin/cancel-requests" element={<CancelRequests />} />
@@ -59,7 +66,13 @@ export default function App(){
         <Route path="/employee" element={<Employee />} />
         <Route path="/employee/account/create" element={<ShowCreateAccountEmployee />} />
         <Route path="/admin/accountHistory/:id" element={<ShowAccountHistory />} />
+        <Route path="/admin/payment-review" element={<PaymentReview />} />
         <Route path="/admin/service/create" element={<ShowCreateServices />} />
+
+        {/* Payment */}
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
+        <Route path="/payment/history" element={<PaymentHistory />} />
       </Routes>
       <Footer />
     </div>
