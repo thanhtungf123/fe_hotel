@@ -1,5 +1,6 @@
-import React from 'react'
-import { Card, Form, Button } from 'react-bootstrap'
+import React, { useEffect, useState } from 'react';
+import { Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
+import axios from '../../api/axiosInstance';
 
 export default function FilterSidebar({ filters, onChange, onClear }) {
   const update = (k,v)=> onChange({ ...filters, [k]: v })
@@ -12,6 +13,38 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
   ]
   const amenityOptions = ['WiFi miễn phí','Ban công','Tầm nhìn biển','Tầm nhìn thành phố','Bồn tắm jacuzzi','Minibar']
 
+  // ---- Dịch vụ (fetch từ BE)
+  const [svcLoading, setSvcLoading] = useState(false)
+  const [svcErr, setSvcErr] = useState('')
+  const [serviceOptions, setServiceOptions] = useState([]) // [{id,name,price}]
+  // ---- Dịch vụ (fetch từ BE) part 2
+  const fetchServices = async () => {
+    setSvcLoading(true); setSvcErr("");
+    try {
+      let res;
+      try {
+        res = await axios.get("/admin/services", { timeout: 5000 });
+      } catch (e) {
+        const code = e?.response?.status ?? 0;
+        if (code === 401 || code === 403 || code === 404 || code === 405 || code >= 500) {
+          res = await axios.get("/services", { timeout: 5000 });
+        } else { throw e; }
+      }
+      const data = Array.isArray(res.data) ? res.data : res.data?.items ?? [];
+      const mapped = data.map(s => ({
+        id: s.id ?? s.service_id,
+        name: s.nameService ?? s.service_name ?? s.serviceName ?? s.name,
+        price: s.price
+      })).filter(s => s.id != null && s.name);
+      setServiceOptions(mapped);
+    } catch (err) {
+      setSvcErr(err?.response?.data?.message || err.message || "Failed to load services");
+    } finally { setSvcLoading(false); }
+  };
+
+  useEffect(() => { fetchServices(); }, []);
+  const formatVND = v => Number(v).toLocaleString('vi-VN') + '₫';
+//==============================================================================================================================
   return (
     <div className="side-card">
       <Card className="card-soft mb-3">
@@ -78,6 +111,38 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
         </Card.Body>
       </Card>
 
+       {/* ---- Dịch vụ ---- */}
+      <Card className="card-soft mb-3">
+        <Card.Body>
+          <Card.Title className="h6">Dịch vụ</Card.Title>
+
+          {svcLoading ? (
+            <div className="py-2 text-center">
+              <Spinner animation="border" size="sm" /> Đang tải…
+            </div>
+          ) : svcErr ? (
+            <Alert variant="danger" className="mb-2">{svcErr}</Alert>
+          ) : serviceOptions.length === 0 ? (
+            <div className="text-muted small">Không có dịch vụ</div>
+          ) : (
+            serviceOptions.map(s => (
+              <Form.Check
+                key={s.id}
+                type="checkbox"
+                className="mb-2"
+                label={`${s.name} — ${formatVND(s.price)}`}
+                checked={(filters.serviceIds || []).includes(s.id)}
+                onChange={e => {
+                  const set = new Set(filters.serviceIds || []);
+                  e.target.checked ? set.add(s.id) : set.delete(s.id);
+                  update('serviceIds', Array.from(set));
+                }}
+              />
+            ))
+          )}
+        </Card.Body>
+      </Card>
+      
       <Card className="card-soft mb-3">
         <Card.Body>
           <Card.Title className="h6">Trạng thái phòng</Card.Title>
