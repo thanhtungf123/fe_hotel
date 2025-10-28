@@ -1,9 +1,12 @@
-// src/pages/Admin.jsx
+// Enhanced Admin Page - Luxury Design
 import React, { useEffect, useMemo, useState } from "react";
-import { Container, Row, Col, Table, Spinner, Alert, Form, Badge, Tabs, Tab, Button } from "react-bootstrap";
+import { Container, Row, Col, Table, Alert, Form, Badge, Tabs, Tab, Button } from "react-bootstrap";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import axios from "../api/axiosInstance";
 import { useAuth } from "../store/auth";
+import showToast from "../utils/toast";
+import { GridSkeleton } from "../components/common/LoadingSkeleton";
 import RoomManagement from "../components/admin/RoomManagement";
 import ServicesManagement from "../components/admin/ServicesManagement";
 
@@ -236,20 +239,57 @@ export default function Admin() {
   };
 
   return (
-    <Container className="py-4">
-      <Row className="mb-3">
-        <Col>
-          <h3 className="mb-0">Admin Dashboard</h3>
-          <div className="text-muted">Manage Customer & Employees</div>
-        </Col>
-        <Col className="text-end">
-          <Button as={Link} to="/employee" variant="outline-secondary" className="me-2">Go to Employee</Button>
-          <Button as={Link} to="/" variant="dark">Back to Home</Button>
-        </Col>
-      </Row>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Container className="py-4" style={{ maxWidth: "1400px" }}>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Row className="mb-4 align-items-center">
+            <Col>
+              <h2 
+                className="mb-1" 
+                style={{ 
+                  fontFamily: "Playfair Display, serif",
+                  color: "var(--primary-dark)"
+                }}
+              >
+                🏨 Admin Dashboard
+              </h2>
+              <div className="text-muted">Quản lý Khách hàng, Nhân viên & Phòng</div>
+            </Col>
+            <Col className="text-end">
+              <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
+                Đến trang Nhân viên
+              </Button>
+              <Button 
+                as={Link} 
+                to="/" 
+                style={{ 
+                  background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)",
+                  border: "none",
+                  borderRadius: "10px"
+                }}
+              >
+                Về trang chủ
+              </Button>
+            </Col>
+          </Row>
+        </motion.div>
 
-
-      <Tabs defaultActiveKey="accounts" id="admin-tabs" className="mb-4">
+        <Tabs 
+          defaultActiveKey="accounts" 
+          id="admin-tabs" 
+          className="mb-4"
+          style={{
+            borderBottom: "2px solid rgba(201, 162, 74, 0.3)"
+          }}
+        >
         {/* -------- Accounts -------- */}
         <Tab eventKey="accounts" title={`Customer (${accounts.length})`}>
           <Row className="mb-3">
@@ -268,7 +308,7 @@ export default function Admin() {
           </Row>
 
           {loading.accounts ? (
-            <div className="py-5 text-center"><Spinner animation="border" /> Loading accounts…</div>
+            <GridSkeleton cols={1} rows={1} />
           ) : error.accounts ? (
             <Alert variant="danger">Failed to load accounts: {error.accounts}</Alert>
           ) : (
@@ -335,7 +375,7 @@ export default function Admin() {
           </Row>
 
           {loading.employees ? (
-            <div className="py-5 text-center"><Spinner animation="border" /> Loading employees…</div>
+            <GridSkeleton cols={1} rows={1} />
           ) : error.employees ? (
             <Alert variant="danger">Failed to load employees: {error.employees}</Alert>
           ) : (
@@ -381,10 +421,11 @@ export default function Admin() {
           )}
         </Tab>
         {/* -------- Employees -------- */}
-        <Tab eventKey="services" title="Service Management">
-            <ServicesManagement />
+        <Tab eventKey="services" title="Quản lý dịch vụ">
+          <ServicesManagement />
         </Tab>
       </Tabs>
-    </Container>
+      </Container>
+    </motion.div>
   );
 }
