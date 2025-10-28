@@ -1,7 +1,7 @@
 // src/pages/Booking.jsx
 import React, { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Container, Row, Col, Card, Form, Button, Alert, Badge } from 'react-bootstrap'
+import { Container, Row, Col, Card, Form, Button, Alert, Badge, Modal } from 'react-bootstrap'
 import axios from '../api/axiosInstance'
 import PaymentButton from '../components/PaymentButton'
 
@@ -63,16 +63,57 @@ export default function Booking(){
     if (capacity && Number(form.guests) > capacity) return `Số khách tối đa: ${capacity}`
     if (auth?.role && auth.role.toLowerCase() !== 'customer') return 'Chỉ tài khoản khách hàng mới được đặt phòng'
     if (!kyc.fullName) return 'Vui lòng nhập họ tên'
-    if (!kyc.phoneNumber) return 'Vui lòng nhập số điện thoại';
-    if (!kyc.nationalIdNumber) return 'Vui lòng nhập số CCCD';
-    if (!kyc.dateOfBirth) return 'Vui lòng chọn ngày sinh';
-    if (!kyc.idFrontUrl) return 'Vui lòng tải ảnh CCCD mặt trước';
-    if (!kyc.idBackUrl)  return 'Vui lòng tải ảnh CCCD mặt sau';
+    if (!kyc.phoneNumber) return 'Vui lòng nhập số điện thoại'
+    if (!kyc.nationalIdNumber) return 'Vui lòng nhập số CCCD'
+    if (!kyc.dateOfBirth) return 'Vui lòng chọn ngày sinh'
+    if (!kyc.idFrontUrl) return 'Vui lòng tải ảnh CCCD mặt trước'
+    if (!kyc.idBackUrl)  return 'Vui lòng tải ảnh CCCD mặt sau'
     return ''
   }
 
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(null)
+
+  // === NEW: trạng thái xung đột lịch ===
+  const [conflict, setConflict] = useState(null) // { message, availableFrom, blocked: [{start,end}] }
+  const [showConflict, setShowConflict] = useState(false)
+
+  // Preview phòng trống mỗi khi đổi ngày
+  useEffect(() => {
+    if (!id || !form.checkIn || !form.checkOut) return;
+    let ignore = false;
+    (async () => {
+      try {
+        const { data } = await axios.get(`/rooms/${id}/availability`, {
+          params: { start: form.checkIn, end: form.checkOut }
+        });
+        if (ignore) return;
+        if (data && data.available === false) {
+          setConflict(data);
+          setShowConflict(true);
+        } else {
+          setConflict(null);
+          setShowConflict(false);
+        }
+      } catch {
+        // bỏ qua preview error
+      }
+    })();
+    return () => { ignore = true; }
+  }, [id, form.checkIn, form.checkOut]);
+
+  // checkOut tối thiểu (nếu có availableFrom > checkIn thì ép theo availableFrom)
+  const checkOutMin = useMemo(() => {
+    const base = form.checkIn || todayStr();
+    if (conflict?.availableFrom) {
+      try {
+        const start = new Date(form.checkIn);
+        const avail = new Date(conflict.availableFrom);
+        if (start < avail) return conflict.availableFrom;
+      } catch {}
+    }
+    return base;
+  }, [form.checkIn, conflict?.availableFrom]);
 
   const submit = async (e) => {
     e.preventDefault()
@@ -81,30 +122,36 @@ export default function Booking(){
     setSubmitting(true); setError(''); setSuccess(null)
     try{
       const payload = {
-          roomId: Number(id),
-          guests: Number(form.guests),
-          checkIn: form.checkIn,
-          checkOut: form.checkOut,
-          depositPercent,
-          paymentChoice: payChoice,
-          // KYC phẳng theo BookingRequest (BE)
-          fullName: kyc.fullName,
-          dateOfBirth: kyc.dateOfBirth,
-          gender: kyc.gender,
-          phoneNumber: kyc.phoneNumber,
-          nationalIdNumber: kyc.nationalIdNumber,
-          idFrontUrl: kyc.idFrontUrl,
-          idBackUrl: kyc.idBackUrl,
-          bankAccountName: kyc.bankAccountName,
-          bankAccountNumber: kyc.bankAccountNumber,
-          bankName: kyc.bankName,
-          bankCode: kyc.bankCode,
-          bankBranch: kyc.bankBranch
-              }
+        roomId: Number(id),
+        guests: Number(form.guests),
+        checkIn: form.checkIn,
+        checkOut: form.checkOut,
+        depositPercent,
+        paymentChoice: payChoice,
+        // KYC phẳng theo BookingRequest (BE)
+        fullName: kyc.fullName,
+        dateOfBirth: kyc.dateOfBirth,
+        gender: kyc.gender,
+        phoneNumber: kyc.phoneNumber,
+        nationalIdNumber: kyc.nationalIdNumber,
+        idFrontUrl: kyc.idFrontUrl,
+        idBackUrl: kyc.idBackUrl,
+        bankAccountName: kyc.bankAccountName,
+        bankAccountNumber: kyc.bankAccountNumber,
+        bankName: kyc.bankName,
+        bankCode: kyc.bankCode,
+        bankBranch: kyc.bankBranch
+      }
       const { data } = await axios.post('/bookings', payload)
       setSuccess(data) // { bookingId, status, totalVnd, depositVnd, paymentState }
     }catch(err){
-      setError(err?.response?.data?.message || err.message)
+      if (err?.response?.status === 409) {
+        // BE trả OverlapException
+        setConflict(err.response.data)
+        setShowConflict(true)
+      } else {
+        setError(err?.response?.data?.message || err.message)
+      }
     }finally{
       setSubmitting(false)
     }
@@ -146,11 +193,30 @@ export default function Booking(){
                 <Row className="g-3 mt-1">
                   <Col md={6}>
                     <Form.Label className="small">Ngày nhận phòng</Form.Label>
-                    <Form.Control type="date" min={todayStr()} name="checkIn" value={form.checkIn} onChange={onChange} required />
+                    <Form.Control
+                      type="date"
+                      min={todayStr()}
+                      name="checkIn"
+                      value={form.checkIn}
+                      onChange={onChange}
+                      required
+                    />
                   </Col>
                   <Col md={6}>
                     <Form.Label className="small">Ngày trả phòng</Form.Label>
-                    <Form.Control type="date" min={form.checkIn || todayStr()} name="checkOut" value={form.checkOut} onChange={onChange} required />
+                    <Form.Control
+                      type="date"
+                      min={checkOutMin}
+                      name="checkOut"
+                      value={form.checkOut}
+                      onChange={onChange}
+                      required
+                    />
+                    {conflict?.availableFrom && (
+                      <div className="small text-warning mt-1">
+                        * Phòng sẽ trống từ {new Date(conflict.availableFrom).toLocaleDateString()}.
+                      </div>
+                    )}
                   </Col>
                 </Row>
                 <Form.Group className="mt-3">
@@ -277,6 +343,51 @@ export default function Booking(){
           </Card>
         </Col>
       </Row>
+
+      {/* Modal xung đột lịch */}
+      <Modal show={showConflict} onHide={()=>setShowConflict(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Phòng đang bận</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert variant="warning" className="mb-3">
+            {conflict?.message || 'Khoảng ngày bạn chọn trùng với đơn khác.'}
+          </Alert>
+
+          {conflict?.availableFrom && (
+            <p>Phòng sẽ trống từ: <b>{new Date(conflict.availableFrom).toLocaleDateString()}</b></p>
+          )}
+
+          {Array.isArray(conflict?.blocked) && conflict.blocked.length > 0 && (
+            <>
+              <div className="mb-1">Các khoảng đang bị chặn:</div>
+              <ul className="mb-0">
+                {conflict.blocked.map((r, i) => (
+                  <li key={i}>
+                    {new Date(r.start).toLocaleDateString()} → {new Date(r.end).toLocaleDateString()}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="primary"
+            onClick={()=>{
+              if (conflict?.availableFrom) {
+                const start = conflict.availableFrom;
+                const out = new Date(start); out.setDate(out.getDate()+1);
+                setForm(f => ({ ...f, checkIn: start, checkOut: out.toISOString().slice(0,10) }));
+              }
+              setShowConflict(false);
+            }}
+          >
+            Chọn ngày trống sớm nhất
+          </Button>
+          <Button variant="secondary" onClick={()=>setShowConflict(false)}>Để tôi tự chọn lại</Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   )
 }
