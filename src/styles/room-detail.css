@@ -1,10 +1,294 @@
-.detail-wrap{max-width:1280px}
-.card-soft{border:1px solid #eee;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-.badge-light{background:#f3f3f3;color:#333}
-.main-photo img{width:100%;height:460px;object-fit:cover;border-radius:14px}
-.photo-count{position:absolute;right:12px;bottom:12px;background:#0009;color:#fff;
-  padding:2px 8px;border-radius:12px;font-size:.85rem}
-.thumbs{display:flex;gap:8px}
-.thumbs img{width:150px;height:90px;object-fit:cover;border-radius:10px;border:2px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.12)}
-.sticky{position:sticky;top:88px}
-.avatar{width:48px;height:48px;border-radius:50%;object-fit:cover}
+/* Enhanced Room Detail Styles - Luxury Hotel Design */
+
+/* Container */
+.detail-wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Professional Card */
+.card-soft {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.card-soft:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Badge Styling */
+.badge-light {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+}
+
+/* Main Photo */
+.main-photo-wrapper {
+  position: relative;
+  background: #f5f5f5;
+  min-height: 500px;
+}
+
+.main-photo-container {
+  width: 100%;
+  height: 100%;
+}
+
+.main-photo {
+  width: 100%;
+  height: 500px;
+  object-fit: cover;
+  border-radius: 16px;
+  transition: transform 0.5s ease;
+}
+
+.main-photo-wrapper:hover .main-photo {
+  transform: scale(1.02);
+}
+
+/* Photo Counter Badge */
+.photo-count {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+/* Thumbnails */
+.thumbs {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-gold, #C9A24A) #f1f1f1;
+}
+
+.thumbs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.thumbs::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.thumbs::-webkit-scrollbar-thumb {
+  background: var(--primary-gold, #C9A24A);
+  border-radius: 10px;
+}
+
+.thumb-image {
+  width: 160px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 3px solid transparent;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.thumb-image:hover {
+  border-color: var(--primary-gold, #C9A24A);
+  box-shadow: 0 8px 20px rgba(201, 162, 74, 0.3);
+  transform: translateY(-4px);
+}
+
+.thumb-image.active {
+  border-color: var(--primary-gold, #C9A24A);
+  box-shadow: 0 8px 20px rgba(201, 162, 74, 0.4);
+}
+
+/* Sticky Booking Card */
+.sticky-booking {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.booking-card {
+  background: white;
+  border: 2px solid rgba(201, 162, 74, 0.2);
+}
+
+.booking-card:hover {
+  border-color: rgba(201, 162, 74, 0.4);
+  box-shadow: 0 16px 48px rgba(201, 162, 74, 0.2);
+}
+
+/* Avatar */
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #f0f0f0;
+}
+
+/* Review Section */
+.review-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.review-item:hover {
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-left: -1rem;
+  margin-right: -1rem;
+}
+
+/* Highlights */
+.highlight-item {
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.highlight-item:hover {
+  background: #f8f9fa;
+  transform: translateX(8px);
+}
+
+/* Amenities Section */
+.amenity-category {
+  margin-bottom: 2rem;
+}
+
+.amenity-item {
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.amenity-item:hover {
+  background: #f8f9fa;
+  transform: translateX(8px);
+}
+
+/* Rating Histogram */
+.rating-bar {
+  height: 10px;
+  background: #e9ecef;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+
+.rating-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFB800 0%, #FFA000 100%);
+  transition: width 0.8s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+  .sticky-booking {
+    position: static;
+    margin-top: 2rem;
+  }
+
+  .main-photo {
+    height: 350px;
+  }
+
+  .thumb-image {
+    width: 120px;
+    height: 75px;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-wrap {
+    padding: 1rem 0.5rem;
+  }
+
+  .main-photo {
+    height: 280px;
+    border-radius: 12px;
+  }
+
+  .thumb-image {
+    width: 100px;
+    height: 65px;
+  }
+
+  .thumbs {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .main-photo {
+    height: 220px;
+  }
+
+  .thumb-image {
+    width: 80px;
+    height: 50px;
+  }
+
+  .photo-count {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Animation Classes */
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* Scrollbar for sticky booking card */
+.sticky-booking::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sticky-booking::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.sticky-booking::-webkit-scrollbar-thumb {
+  background: var(--primary-gold, #C9A24A);
+  border-radius: 10px;
+}

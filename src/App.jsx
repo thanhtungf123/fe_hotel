@@ -1,5 +1,8 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import './styles/toastify-custom.css'
 import TopNavbar from './layout/TopNavbar'
 import Footer from './layout/Footer'
 import Home from './pages/Home'
@@ -37,6 +40,19 @@ import PaymentHistory from './pages/payment/PaymentHistory'
 export default function App() {
   return (
     <div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        style={{ zIndex: 9999 }}
+      />
       <TopNavbar />
       <Routes>
         {/* General */}

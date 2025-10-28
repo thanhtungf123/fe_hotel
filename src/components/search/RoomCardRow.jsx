@@ -1,69 +1,206 @@
-// RoomCardRow.jsx
+// Enhanced RoomCardRow - Clickable Entire Card
 import React from 'react'
 import { Badge, Button } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { LazyLoadImage } from 'react-lazy-load-image-component'
+import { calculateDiscount } from '../../utils/discount'
+import 'react-lazy-load-image-component/src/effects/blur.css'
 
 export default function RoomCardRow({ room }) {
+  const navigate = useNavigate();
   const rating = room.rating ?? 4.7
-  const discount = room.discount ?? (room.priceVnd>3000000?17:0)
+  const discount = calculateDiscount(room.priceVnd)
+  const reviews = room.reviews ?? 120
+
+  // Navigate to room detail when clicking anywhere on card
+  const handleCardClick = (e) => {
+    // Don't navigate if clicking on action buttons
+    if (e.target.closest('.action-buttons')) {
+      return;
+    }
+    navigate(`/rooms/${room.id}`);
+  };
 
   return (
-    <div className="card card-soft mb-4">
+    <motion.div
+      className="card card-soft mb-4 hover-lift"
+      whileHover={{ scale: 1.01 }}
+      transition={{ duration: 0.2 }}
+      style={{ 
+        overflow: 'hidden',
+        cursor: 'pointer' // Show it's clickable
+      }}
+      onClick={handleCardClick}
+    >
       <div className="row g-0">
-        <div className="col-md-5 p-3">
-          <div className="position-relative">
-            {discount>0 && <Badge bg="danger" className="position-absolute m-2">-{discount}%</Badge>}
-            <img src={room.imageUrl} alt={room.name} className="result-thumb w-100"/>
-            <Badge bg="dark" className="position-absolute top-0 end-0 m-2">
-              {(room.reviews ?? 120) + ' đánh giá'}
-            </Badge>
+        {/* Image Section */}
+        <div className="col-md-5 p-0">
+          <div className="position-relative overflow-hidden hover-zoom" style={{ height: '100%', minHeight: '280px' }}>
+            {discount > 0 && (
+              <Badge 
+                bg="danger" 
+                className="position-absolute top-0 start-0 m-3"
+                style={{ 
+                  zIndex: 10, 
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  padding: '0.5rem 0.75rem'
+                }}
+              >
+                -{discount}%
+              </Badge>
+            )}
+            
+            <LazyLoadImage
+              src={room.imageUrl}
+              alt={room.name}
+              effect="blur"
+              className="w-100 h-100"
+              style={{ 
+                objectFit: 'cover',
+                minHeight: '280px',
+                transition: 'transform 0.5s ease'
+              }}
+              placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em' style='font-size:24px'%3E🏨%3C/text%3E%3C/svg%3E"
+            />
+
+            {/* Reviews Badge Overlay */}
+            <div 
+              className="position-absolute bottom-0 start-0 end-0 p-3"
+              style={{
+                background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
+              }}
+            >
+              <Badge bg="dark" className="bg-opacity-75">
+                ⭐ {rating} ({reviews} đánh giá)
+              </Badge>
+            </div>
           </div>
         </div>
 
-        <div className="col-md-7 p-3">
-          <div className="d-flex justify-content-between">
-            <h5 className="mb-2">{room.name}</h5>
-            <div className="text-warning">⭐ {rating}</div>
+        {/* Content Section */}
+        <div className="col-md-7 p-4">
+          <div className="d-flex justify-content-between align-items-start mb-3">
+            <h5 
+              className="mb-0" 
+              style={{ 
+                fontFamily: 'Playfair Display, serif',
+                fontSize: '1.5rem',
+                color: 'var(--primary-dark)'
+              }}
+            >
+              {room.name}
+            </h5>
           </div>
 
-          <div className="text-muted small mb-2">
-            👥 {room.capacity} khách &nbsp; | &nbsp; 🛏️ {room.type || '—'} &nbsp; | &nbsp; 📐 {room.sizeSqm}m²
+          {/* Room Info */}
+          <div className="text-muted mb-3" style={{ fontSize: '0.95rem' }}>
+            <span className="me-3">
+              <strong>👥</strong> {room.capacity} khách
+            </span>
+            <span className="me-3">
+              <strong>🛏️</strong> {room.type || 'Standard'}
+            </span>
+            {room.sizeSqm && (
+              <span>
+                <strong>📐</strong> {room.sizeSqm}m²
+              </span>
+            )}
           </div>
 
-          <div className="mb-2 fw-semibold">Đặc điểm nổi bật:</div>
-          <div className="d-flex flex-wrap gap-2 mb-2">
-            {(room.amenities || []).slice(0,3).map((a,i)=>(
-              <Badge key={i} bg="light" text="dark" className="badge-light">{a}</Badge>
-            ))}
-          </div>
-          <div className="d-flex gap-3 text-muted small mb-3">
-            <div>📶 Wifi</div><div>🅿️ Parking</div><div>🛎️ Room-Service</div>
+          {/* Amenities Tags */}
+          <div className="mb-3">
+            <div className="small fw-semibold mb-2 text-muted">Đặc điểm nổi bật:</div>
+            <div className="d-flex flex-wrap gap-2">
+              {(room.amenities || []).slice(0, 4).map((amenity, i) => (
+                <Badge 
+                  key={i} 
+                  bg="light" 
+                  text="dark" 
+                  className="border"
+                  style={{ 
+                    fontWeight: 'normal',
+                    padding: '0.4rem 0.75rem',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  {amenity}
+                </Badge>
+              ))}
+              {(room.amenities || []).length > 4 && (
+                <Badge 
+                  bg="light" 
+                  text="muted" 
+                  className="border"
+                  style={{ fontWeight: 'normal' }}
+                >
+                  +{(room.amenities || []).length - 4}
+                </Badge>
+              )}
+            </div>
           </div>
 
-          <div className="d-flex justify-content-between align-items-center">
+          {/* Standard Amenities Icons */}
+          <div className="d-flex gap-4 text-muted small mb-4">
+            <div title="WiFi miễn phí">📶 WiFi</div>
+            <div title="Bãi đỗ xe">🅿️ Parking</div>
+            <div title="Dịch vụ phòng">🛎️ Room Service</div>
+          </div>
+
+          {/* Price & Actions */}
+          <div className="d-flex justify-content-between align-items-end">
             <div>
-              {discount>0 && (
-                <div className="text-decoration-line-through text-muted small">
-                  {(Math.round(room.priceVnd*1.2)).toLocaleString('vi-VN')}₫
+              {discount > 0 && (
+                <div className="text-decoration-line-through text-muted small mb-1">
+                  {Math.round(room.priceVnd * (1 + discount / 100)).toLocaleString('vi-VN')}₫
                 </div>
               )}
-              <div className="fs-4 price-label">
-                {room.priceVnd.toLocaleString('vi-VN')}₫ <span className="fs-6 text-muted">/ đêm</span>
+              <div className="d-flex align-items-baseline gap-2">
+                <span 
+                  className="h3 mb-0 fw-bold"
+                  style={{ color: 'var(--primary-gold)' }}
+                >
+                  {room.priceVnd.toLocaleString('vi-VN')}₫
+                </span>
+                <span className="text-muted">/ đêm</span>
               </div>
             </div>
 
-            <div className="d-flex gap-2">
-              <Button as={Link} to={`/rooms/${room.id}`} variant="light" className="border">
-                Xem chi tiết
-              </Button>
-              {/* to Booking */}
-              <Button as={Link} to={`/booking/${room.id}`} variant="danger">
-                Đặt ngay
-              </Button>
+            {/* Action Buttons - Prevent card click propagation */}
+            <div className="d-flex gap-2 action-buttons">
+              <motion.div 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => e.stopPropagation()} // Stop propagation
+              >
+                <Button 
+                  as={Link} 
+                  to={`/booking/${room.id}`}
+                  size="lg"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #C9A24A 0%, #B8933D 100%)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.6rem 1.5rem',
+                    fontWeight: '600',
+                    boxShadow: '0 4px 12px rgba(201, 162, 74, 0.3)'
+                  }}
+                >
+                  Đặt ngay
+                </Button>
+              </motion.div>
             </div>
+          </div>
+
+          {/* Hint text */}
+          <div className="mt-2 text-center">
+            <small className="text-muted">
+              💡 Click vào bất kỳ đâu để xem chi tiết phòng
+            </small>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
