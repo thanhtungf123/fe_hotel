@@ -5,18 +5,16 @@ const API_BASE = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api').
 
 const instance = axios.create({
   baseURL: API_BASE,
-  headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-  withCredentials: false, // không dùng cookie
+  headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+  withCredentials: false,
 });
 
-// Tự động gắn token
 instance.interceptors.request.use((config) => {
   try {
     const auth = JSON.parse(localStorage.getItem('auth') || '{}');
     if (auth?.token) {
       config.headers['X-Auth-Token'] = auth.token;
-      // Thêm Bearer để phòng trường hợp BE chỉ đọc Authorization
-      config.headers['Authorization'] = `Bearer ${auth.token}`;
+      config.headers['Authorization'] = `Bearer ${auth.token}`; // <-- PHẢI có backticks
     }
   } catch {}
   return config;
