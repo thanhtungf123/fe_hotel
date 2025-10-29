@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react'  ;
+
 export default function Footer(){
     return (
       <footer className="bg-body-tertiary mt-5 pt-5 pb-4">

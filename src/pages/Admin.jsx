@@ -9,7 +9,6 @@ import showToast from "../utils/toast";
 import { GridSkeleton } from "../components/common/LoadingSkeleton";
 import RoomManagement from "../components/admin/RoomManagement";
 import ServicesManagement from "../components/admin/ServicesManagement";
-
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -239,6 +238,21 @@ export default function Admin() {
   };
 
   return (
+    <Container className="py-4">
+      <Row className="mb-3">
+        <Col>
+          <h3 className="mb-0">Admin Dashboard</h3>
+          <div className="text-muted">Manage Customer & Employees</div>
+        </Col>
+        <Col className="text-end">
+          <Button as={Link} to="/admin/schedules" variant="outline-secondary" className="me-2">Go to Schedule</Button>
+          <Button as={Link} to="/employee" variant="outline-secondary" className="me-2">Go to Employee</Button>
+          <Button as={Link} to="/" variant="dark">Back to Home</Button>
+        </Col>
+      </Row>
+
+
+      <Tabs defaultActiveKey="accounts" id="admin-tabs" className="mb-4">
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
