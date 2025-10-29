@@ -25,7 +25,7 @@ import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
 import ShowAccountHistory from './pages/admin/ShowAccountHistory'
 import ShowCreateServices from './pages/admin/ShowCreateServices'
 import AdminSchedule from "./pages/admin/AdminSchedule";
-
+import AdminCreateSchedule from './pages/admin/AdminCreateSchedule'
 // --- Booking ---
 import Booking from './pages/Booking'
 
@@ -63,6 +63,7 @@ export default function App(){
         <Route path="/admin/accountHistory/:id" element={<ShowAccountHistory />} />
         <Route path="/admin/service/create" element={<ShowCreateServices />} />
         <Route path="/admin/schedules" element={<AdminSchedule />} />
+        <Route path="/admin/schedules/create" element={<AdminCreateSchedule />} />
       </Routes>
       <Footer />
     </div>
