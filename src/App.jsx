@@ -1,5 +1,8 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import './styles/toastify-custom.css'
 import TopNavbar from './layout/TopNavbar'
 import Footer from './layout/Footer'
 import Home from './pages/Home'
@@ -23,6 +26,7 @@ import ShowEditEmployee from './pages/admin/ShowEditEmployee'
 import Employee from './pages/Employee'
 import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
 import ShowAccountHistory from './pages/admin/ShowAccountHistory'
+import PaymentReview from './pages/admin/PaymentReview'
 import ShowCreateServices from './pages/admin/ShowCreateServices'
 import AdminSchedule from "./pages/admin/AdminSchedule";
 import AdminCreateSchedule from './pages/admin/AdminCreateSchedule'
@@ -30,9 +34,27 @@ import AdminEditSchedule from './pages/admin/AdminEditSchedule'
 // --- Booking ---
 import Booking from './pages/Booking'
 
-export default function App(){
+// --- Payment ---
+import PaymentSuccess from './pages/payment/PaymentSuccess'
+import PaymentCancel from './pages/payment/PaymentCancel'
+import PaymentHistory from './pages/payment/PaymentHistory'
+
+export default function App() {
   return (
     <div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        style={{ zIndex: 9999 }}
+      />
       <TopNavbar />
       <Routes>
         {/* General */}
@@ -51,9 +73,9 @@ export default function App(){
         <Route path="/account/bookings" element={<BookingHistory />} />
         <Route path="/account/profile" element={<Profile />} />
         <Route path="/account/password" element={<ChangePassword />} />
-        
+
         {/* Admin Management */}
-        <Route path="/admin" element={<Admin />} /> 
+        <Route path="/admin" element={<Admin />} />
         <Route path="/admin/account/create" element={<ShowCreateAccount />} />
         <Route path="/admin/accounts/:id" element={<ShowEditAccount />} />
         <Route path="/admin/cancel-requests" element={<CancelRequests />} />
@@ -62,11 +84,17 @@ export default function App(){
         <Route path="/employee" element={<Employee />} />
         <Route path="/employee/account/create" element={<ShowCreateAccountEmployee />} />
         <Route path="/admin/accountHistory/:id" element={<ShowAccountHistory />} />
+        <Route path="/admin/payment-review" element={<PaymentReview />} />
         <Route path="/admin/service/create" element={<ShowCreateServices />} />
         <Route path="/admin/schedules" element={<AdminSchedule />} />
         <Route path="/admin/schedules/create" element={<AdminCreateSchedule />} />
         <Route path="/admin/schedules/:shiftId" element={<AdminEditSchedule />} />
 
+
+        {/* Payment */}
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
+        <Route path="/payment/history" element={<PaymentHistory />} />
       </Routes>
       <Footer />
     </div>
