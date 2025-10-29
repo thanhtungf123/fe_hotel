@@ -6,7 +6,6 @@ import axios from "../api/axiosInstance";
 import { useAuth } from "../store/auth";
 import RoomManagement from "../components/admin/RoomManagement";
 import ServicesManagement from "../components/admin/ServicesManagement";
-
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -243,6 +242,7 @@ export default function Admin() {
           <div className="text-muted">Manage Customer & Employees</div>
         </Col>
         <Col className="text-end">
+          <Button as={Link} to="/admin/schedules" variant="outline-secondary" className="me-2">Go to Schedule</Button>
           <Button as={Link} to="/employee" variant="outline-secondary" className="me-2">Go to Employee</Button>
           <Button as={Link} to="/" variant="dark">Back to Home</Button>
         </Col>
