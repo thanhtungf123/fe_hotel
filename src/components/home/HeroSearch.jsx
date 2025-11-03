@@ -77,7 +77,7 @@ export default function HeroSearch() {
                   textShadow: '1px 1px 4px rgba(0,0,0,0.5)'
                 }}
               >
-                Khám phá sự sang trọng và tiện nghi tại LuxeStay – <br className="d-none d-md-block" />
+                Khám phá sự sang trọng và tiện nghi tại Aurora Palace – <br className="d-none d-md-block" />
                 nơi mọi khoảnh khắc đều trở nên đặc biệt
               </motion.p>
 

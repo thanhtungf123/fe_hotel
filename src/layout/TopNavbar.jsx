@@ -28,14 +28,16 @@ export default function TopNavbar() {
   const roleLower = String(user?.role || '').toLowerCase();
   const isStaff = ['staff', 'admin'].includes(roleLower);
 
-  const avatarUrl =
-    user?.avatarUrl ||
-    `https://i.pravatar.cc/40?u=${encodeURIComponent(user?.accountId || 'guest')}`;
+  const avatarUrl = user?.avatarUrl 
+    ? user.avatarUrl 
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&size=40&background=d4af37&color=fff&bold=true`;
 
   return (
     <Navbar expand="lg" className="bg-body-tertiary py-3 sticky-top shadow-sm">
       <Container>
-        <Navbar.Brand as={Link} to="/">LuxeStay</Navbar.Brand>
+        <Navbar.Brand as={Link} to="/" style={{ fontFamily: 'Playfair Display, serif', fontWeight: 'bold', color: '#d4af37' }}>
+          Aurora Palace
+        </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="main-nav" />
         <Navbar.Collapse id="main-nav">
@@ -68,9 +70,6 @@ export default function TopNavbar() {
                 <Dropdown.Item as={Link} to="/account/profile">
                   👤 Thông tin cá nhân
                 </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/account/password">
-                  🔒 Đổi mật khẩu
-                </Dropdown.Item>
 
                 {/* Khu quản trị (Staff/Admin) */}
                 {isStaff && (
@@ -78,12 +77,6 @@ export default function TopNavbar() {
                     <Dropdown.Divider />
                     <Dropdown.Item as={Link} to="/admin">
                       ⚙️ Trang quản trị
-                    </Dropdown.Item>
-                    <Dropdown.Item as={Link} to="/admin/cancel-requests">
-                      🛎 Duyệt huỷ đặt phòng
-                    </Dropdown.Item>
-                    <Dropdown.Item as={Link} to="/admin/payment-review">
-                      💳 Duyệt thanh toán
                     </Dropdown.Item>
                   </>
                 )}
