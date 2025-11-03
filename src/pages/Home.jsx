@@ -38,7 +38,12 @@ export default function Home(){
       : '?type=auto&limit=5'
     
     axios.get(`${API_BASE}/rooms/recommend${recommendParams}`)
-      .then(r => setRecommendedRooms(r.data || []))
+      .then(r => {
+        const data = Array.isArray(r.data)
+          ? r.data
+          : (Array.isArray(r.data?.data) ? r.data.data : [])
+        setRecommendedRooms(data)
+      })
       .catch(e => {
         console.error('Failed to load recommended rooms:', e)
         // Fallback to regular rooms list
@@ -52,7 +57,12 @@ export default function Home(){
 
     // Load popular rooms for grid display
     axios.get(`${API_BASE}/rooms`)
-      .then(r => setPopularRooms((r.data || []).slice(0, 3)))
+      .then(r => {
+        const data = Array.isArray(r.data)
+          ? r.data
+          : (Array.isArray(r.data?.data) ? r.data.data : [])
+        setPopularRooms(data.slice(0, 3))
+      })
       .catch(e => {
         setError(e.message)
         showToast.error('Không thể tải phòng phổ biến')
@@ -153,7 +163,7 @@ export default function Home(){
             </motion.div>
           )}
           
-          {!loading && !error && (
+          {!loading && !error && Array.isArray(popularRooms) && (
             <Row className="g-4">
               {popularRooms.map((room, idx) => (
                 <Col md={6} lg={4} key={room.id}>
