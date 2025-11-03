@@ -417,12 +417,12 @@ export default function Admin() {
         </Tab>
         
         {/* -------- Walk-in Booking -------- */}
-        <Tab eventKey="walkin" title="🏨 Đặt phòng trực tiếp">
+        <Tab eventKey="walkin" title=" Đặt phòng trực tiếp">
           <WalkInBooking />
         </Tab>
         
         {/* -------- Cancel Requests -------- */}
-        <Tab eventKey="cancels" title="❌ Duyệt huỷ đặt phòng">
+        <Tab eventKey="cancels" title="Duyệt huỷ đặt phòng">
           <CancelRequestsTab />
         </Tab>
         </Tabs>

@@ -345,7 +345,7 @@ export default function Profile() {
                       size="lg"
                       disabled={submitting}
                     >
-                      {submitting ? "Đang lưu..." : "💾 Lưu thay đổi"}
+                      {submitting ? "Đang lưu..." : "Lưu thay đổi"}
                     </Button>
                   </div>
                 </Col>
@@ -357,7 +357,7 @@ export default function Profile() {
         {/* Đổi mật khẩu */}
         <Card className="border-0 shadow-sm mt-3">
           <Card.Body className="p-4">
-            <h5 className="mb-3">🔒 Đổi mật khẩu</h5>
+            <h5 className="mb-3">Đổi mật khẩu</h5>
             <Form onSubmit={handlePasswordSubmit}>
               <Row className="g-3">
                 <Col md={12}>
@@ -418,7 +418,7 @@ export default function Profile() {
                       size="lg"
                       disabled={changingPassword}
                     >
-                      {changingPassword ? "Đang xử lý..." : "🔐 Đổi mật khẩu"}
+                      {changingPassword ? "Đang xử lý..." : "Đổi mật khẩu"}
                     </Button>
                   </div>
                 </Col>
@@ -427,7 +427,7 @@ export default function Profile() {
           </Card.Body>
         </Card>
 
-        {/* Thông tin bổ sung */}
+        {/* Thông tin bổ sung
         <Card className="border-0 shadow-sm mt-3">
           <Card.Body className="p-4">
             <h5 className="mb-3">📋 Thông tin bổ sung</h5>
@@ -456,7 +456,7 @@ export default function Profile() {
               </Col>
             </Row>
           </Card.Body>
-        </Card>
+        </Card> */}
       </Container>
     </motion.div>
   );

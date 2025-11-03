@@ -270,7 +270,7 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
       )}
 
       {/* Trạng thái phòng */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
@@ -301,7 +301,7 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
             ))}
           </Card.Body>
         </Card>
-      </motion.div>
+      </motion.div> */}
 
       {/* Clear Filters Button */}
       {activeFiltersCount > 0 && (
