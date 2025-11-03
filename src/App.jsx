@@ -10,11 +10,11 @@ import Search from './pages/Search'
 import RoomDetail from './pages/RoomDetail'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ForgotPassword from './pages/auth/ForgotPassword'
 
 // --- User Account Pages ---
 import BookingHistory from './pages/account/BookingHistory'
 import Profile from './pages/account/Profile'
-import ChangePassword from './pages/account/ChangePassword'
 
 // --- Admin Pages ---
 import Admin from './pages/Admin'
@@ -26,7 +26,6 @@ import ShowEditEmployee from './pages/admin/ShowEditEmployee'
 import Employee from './pages/Employee'
 import ShowCreateAccountEmployee from './pages/employee/ShowCreateAccount'
 import ShowAccountHistory from './pages/admin/ShowAccountHistory'
-import PaymentReview from './pages/admin/PaymentReview'
 import ShowCreateServices from './pages/admin/ShowCreateServices'
 import AdminSchedule from "./pages/admin/AdminSchedule";
 import AdminCreateSchedule from './pages/admin/AdminCreateSchedule'
@@ -68,11 +67,11 @@ export default function App() {
         {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* User Account */}
         <Route path="/account/bookings" element={<BookingHistory />} />
         <Route path="/account/profile" element={<Profile />} />
-        <Route path="/account/password" element={<ChangePassword />} />
 
         {/* Admin Management */}
         <Route path="/admin" element={<Admin />} />
@@ -84,7 +83,6 @@ export default function App() {
         <Route path="/employee" element={<Employee />} />
         <Route path="/employee/account/create" element={<ShowCreateAccountEmployee />} />
         <Route path="/admin/accountHistory/:id" element={<ShowAccountHistory />} />
-        <Route path="/admin/payment-review" element={<PaymentReview />} />
         <Route path="/admin/service/create" element={<ShowCreateServices />} />
         <Route path="/admin/schedules" element={<AdminSchedule />} />
         <Route path="/admin/schedules/create" element={<AdminCreateSchedule />} />

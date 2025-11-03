@@ -9,6 +9,8 @@ import showToast from "../utils/toast";
 import { GridSkeleton } from "../components/common/LoadingSkeleton";
 import RoomManagement from "../components/admin/RoomManagement";
 import ServicesManagement from "../components/admin/ServicesManagement";
+import WalkInBooking from "../components/admin/WalkInBooking";
+import CancelRequestsTab from "../components/admin/CancelRequestsTab";
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -77,17 +79,6 @@ export default function Admin() {
 
     loadAccounts();
     loadEmployees();
-
-    console.log("📊 Accounts state:", accounts);
-    console.log("🔍 Filtered accounts:", filteredAccounts);
-    console.log("❓ Why not showing?", {
-      accountsLength: accounts.length,
-      filteredLength: filteredAccounts.length,
-      loading: loading.accounts,
-      error: error.accounts
-    });
-
-
 
     return () => { alive = false; };
   }, []);
@@ -207,17 +198,18 @@ export default function Admin() {
     };
 
     try {
-    // Gọi API cập nhật trạng thái
-    // await axios.put(`/admin/employees/${id}`, { status: "terminated" });
-    await axios.delete(`/admin/employees/${id}`)
+      // Gọi API cập nhật trạng thái
+      // await axios.put(`/admin/employees/${id}`, { status: "terminated" });
+      await axios.delete(`/admin/employees/${id}`)
 
-    // Cập nhật UI tại chỗ
-    setEmployees((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, status: "terminated" } : it))
-    );
-  } catch (e) {
-    alert(`Deactivate failed: ${errMsg(e)}`);
-  }
+      // Cập nhật UI tại chỗ
+      setEmployees((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, status: "terminated" } : it))
+      );
+    } catch (e) {
+      const msg = e?.response?.data?.message || e?.message || "Unknown error";
+      alert(`Deactivate failed: ${msg}`);
+    }
   };
 
 
@@ -238,21 +230,6 @@ export default function Admin() {
   };
 
   return (
-    <Container className="py-4">
-      <Row className="mb-3">
-        <Col>
-          <h3 className="mb-0">Admin Dashboard</h3>
-          <div className="text-muted">Manage Customer & Employees</div>
-        </Col>
-        <Col className="text-end">
-          <Button as={Link} to="/admin/schedules" variant="outline-secondary" className="me-2">Go to Schedule</Button>
-          <Button as={Link} to="/employee" variant="outline-secondary" className="me-2">Go to Employee</Button>
-          <Button as={Link} to="/" variant="dark">Back to Home</Button>
-        </Col>
-      </Row>
-
-
-      <Tabs defaultActiveKey="accounts" id="admin-tabs" className="mb-4">
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -434,11 +411,21 @@ export default function Admin() {
             </div>
           )}
         </Tab>
-        {/* -------- Employees -------- */}
+        {/* -------- Services -------- */}
         <Tab eventKey="services" title="Quản lý dịch vụ">
           <ServicesManagement />
         </Tab>
-      </Tabs>
+        
+        {/* -------- Walk-in Booking -------- */}
+        <Tab eventKey="walkin" title="🏨 Đặt phòng trực tiếp">
+          <WalkInBooking />
+        </Tab>
+        
+        {/* -------- Cancel Requests -------- */}
+        <Tab eventKey="cancels" title="❌ Duyệt huỷ đặt phòng">
+          <CancelRequestsTab />
+        </Tab>
+        </Tabs>
       </Container>
     </motion.div>
   );
