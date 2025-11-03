@@ -54,7 +54,7 @@ export default function Login() {
             <Form.Group className="mb-2">
               <div className="d-flex justify-content-between">
                 <Form.Label className="auth-label mb-1">Mật khẩu</Form.Label>
-                <Link className="auth-link small" to="#">Quên mật khẩu?</Link>
+                <Link className="auth-link small" to="/forgot-password">Quên mật khẩu?</Link>
               </div>
               <Form.Control className="auth-input"
                 name="password" type="password" value={form.password}
