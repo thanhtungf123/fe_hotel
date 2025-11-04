@@ -8,6 +8,9 @@ import 'react-lazy-load-image-component/src/effects/blur.css'
 import axios from 'axios'
 import showToast from '../utils/toast'
 import { GridSkeleton } from '../components/common/LoadingSkeleton'
+import RoomRating from '../components/review/RoomRating'
+import ReviewList from '../components/review/ReviewList'
+import ReviewForm from '../components/review/ReviewForm'
 import '../styles/room-detail.css'
 
 export default function RoomDetail() {
@@ -313,105 +316,8 @@ export default function RoomDetail() {
             >
               <Card className="card-soft mt-4">
                 <Card.Body>
-                  <div className="d-flex justify-content-between align-items-center mb-4">
-                    <Card.Title 
-                      className="h4 mb-0"
-                      style={{ fontFamily: 'Playfair Display, serif' }}
-                    >
-                      💬 Đánh giá của khách
-                    </Card.Title>
-                    <Badge 
-                      bg="warning" 
-                      text="dark" 
-                      className="px-3 py-2"
-                      style={{ fontSize: '1.1rem' }}
-                    >
-                      ⭐ {room.rating ?? 4.7}
-                    </Badge>
-                  </div>
-
-                  {/* Rating Histogram */}
-                  {data?.ratingHistogram && (
-                    <div className="mb-4">
-                      {Object.entries(data.ratingHistogram)
-                        .sort((a, b) => b[0] - a[0])
-                        .map(([star, count]) => (
-                          <div key={star} className="d-flex align-items-center gap-3 mb-2">
-                            <span className="small fw-semibold" style={{ width: '60px' }}>
-                              {star} ⭐
-                            </span>
-                            <div 
-                              className="flex-grow-1 bg-light rounded" 
-                              style={{ height: '10px', overflow: 'hidden' }}
-                            >
-                              <motion.div
-                                className="h-100"
-                                style={{ 
-                                  background: 'linear-gradient(90deg, #FFB800 0%, #FFA000 100%)'
-                                }}
-                                initial={{ width: 0 }}
-                                animate={{ 
-                                  width: `${(count / (room.reviews || 1)) * 100}%` 
-                                }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
-                              />
-                            </div>
-                            <span className="small text-muted" style={{ width: '50px', textAlign: 'right' }}>
-                              {count}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-
-                  {/* Reviews List */}
-                  <div className="mt-4">
-                    {data?.reviews && data.reviews.length > 0 ? (
-                      data.reviews.map((review, i) => (
-                        <motion.div
-                          key={i}
-                          className="mb-4 pb-4 border-bottom"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3 + i * 0.1 }}
-                        >
-                          <div className="d-flex align-items-start gap-3">
-                            {review.avatarUrl && (
-                              <img
-                                src={review.avatarUrl}
-                                alt={review.userName}
-                                className="rounded-circle"
-                                style={{
-                                  width: '56px',
-                                  height: '56px',
-                                  objectFit: 'cover',
-                                  border: '3px solid #f0f0f0'
-                                }}
-                              />
-                            )}
-                            <div className="flex-grow-1">
-                              <div className="d-flex align-items-center gap-2 mb-2">
-                                <div className="fw-semibold">{review.userName}</div>
-                                <Badge bg="warning" text="dark">
-                                  ⭐ {review.rating}
-                                </Badge>
-                              </div>
-                              <p className="mb-2" style={{ lineHeight: '1.6' }}>
-                                {review.comment}
-                              </p>
-                              <div className="small text-muted">{review.date}</div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))
-                    ) : (
-                      <div className="text-center text-muted py-5">
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💭</div>
-                        <p className="mb-2 fw-semibold">Chưa có đánh giá nào</p>
-                        <p className="small">Hãy là người đầu tiên đánh giá phòng này!</p>
-                      </div>
-                    )}
-                  </div>
+                  <RoomRating roomId={parseInt(id)} />
+                  <ReviewList roomId={parseInt(id)} />
                 </Card.Body>
               </Card>
             </motion.div>
