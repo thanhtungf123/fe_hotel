@@ -1,6 +1,342 @@
-.search-wrap{max-width:1280px}
-.card-soft{border:1px solid #eee;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-.side-card{position:sticky;top:88px}
-.result-thumb{width:100%;height:240px;object-fit:cover;border-radius:12px}
-.badge-light{background:#f3f3f3;color:#333}
-.price-label{font-weight:700;color:#a3161c}
+/* Enhanced Search Page Styles */
+
+/* Container */
+.search-wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Professional Card Styling */
+.card-soft {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.card-soft:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Sticky Sidebar - Fixed để theo scroll */
+.side-card, .filter-sidebar {
+  position: sticky;
+  top: 100px; /* Cách top một chút để không bị navbar che */
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  z-index: 100; /* Đảm bảo hiển thị trên các element khác */
+}
+
+/* Custom Scrollbar for Sidebar */
+.side-card::-webkit-scrollbar,
+.filter-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.side-card::-webkit-scrollbar-track,
+.filter-sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.side-card::-webkit-scrollbar-thumb,
+.filter-sidebar::-webkit-scrollbar-thumb {
+  background: var(--primary-gold, #C9A24A);
+  border-radius: 10px;
+}
+
+.side-card::-webkit-scrollbar-thumb:hover,
+.filter-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #B8933D;
+}
+
+/* Room Card Thumbnail */
+.result-thumb {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 12px;
+  transition: transform 0.5s ease;
+}
+
+/* Hover Zoom Effect */
+.hover-zoom {
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.hover-zoom:hover .result-thumb,
+.hover-zoom:hover img {
+  transform: scale(1.1);
+}
+
+/* Badge Styling */
+.badge-light {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.badge-light:hover {
+  background: #e9ecef;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Price Label */
+.price-label {
+  font-weight: 700;
+  color: var(--primary-gold, #C9A24A);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* Sort Bar Styling */
+.sort-bar {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.sort-bar:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Luxury Spinner Animation */
+.spinner-luxury {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(201, 162, 74, 0.2);
+  border-top-color: var(--primary-gold, #C9A24A);
+  border-radius: 50%;
+  animation: spin-luxury 0.8s linear infinite;
+}
+
+@keyframes spin-luxury {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Form Controls Enhancement */
+.form-control,
+.form-select {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-gold, #C9A24A);
+  box-shadow: 0 0 0 0.2rem rgba(201, 162, 74, 0.15);
+}
+
+/* Form Check (Checkbox/Radio) Enhancement */
+.form-check-input {
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+  background-color: var(--primary-gold, #C9A24A);
+  border-color: var(--primary-gold, #C9A24A);
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(201, 162, 74, 0.15);
+}
+
+.form-check-label {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Range Slider Enhancement */
+.form-range {
+  height: 6px;
+  cursor: pointer;
+}
+
+.form-range::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--primary-gold, #C9A24A);
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.form-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(201, 162, 74, 0.5);
+}
+
+.form-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--primary-gold, #C9A24A);
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.form-range::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(201, 162, 74, 0.5);
+}
+
+/* Button Enhancements */
+.btn {
+  border-radius: 10px;
+  padding: 0.6rem 1.25rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991px) {
+  .side-card, .filter-sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 2rem;
+  }
+
+  .search-wrap {
+    padding: 1rem 0.5rem;
+  }
+
+  .result-thumb {
+    height: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sort-bar {
+    padding: 0.75rem 1rem;
+  }
+
+  .sort-bar .d-flex {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+
+  .sort-bar h4 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-soft {
+    border-radius: 12px;
+  }
+
+  .result-thumb {
+    height: 180px;
+  }
+}
+
+/* Grid View Specific Styles */
+.grid-view .card-soft {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-view .card-soft .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Empty State & Error State Styling */
+.empty-state,
+.error-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.empty-state svg,
+.error-state svg {
+  margin-bottom: 1.5rem;
+  opacity: 0.6;
+}
+
+.empty-state h4,
+.error-state h4 {
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 1rem;
+  color: var(--primary-dark, #1a1a1a);
+}
+
+.empty-state p,
+.error-state p {
+  color: #6c757d;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

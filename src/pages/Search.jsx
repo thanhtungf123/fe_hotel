@@ -1,10 +1,16 @@
-// src/pages/Search.jsx
+// src/pages/Search.jsx - Enhanced
 import React, { useEffect, useMemo, useState } from 'react'
 import { Container, Row, Col } from 'react-bootstrap'
+import { motion } from 'framer-motion'
 import axios from 'axios'
 import SortBar from '../components/search/SortBar'
 import FilterSidebar from '../components/search/FilterSidebar'
 import RoomCardRow from '../components/search/RoomCardRow'
+import RoomCard from '../components/home/RoomCard'
+import { ListSkeleton, GridSkeleton } from '../components/common/LoadingSkeleton'
+import EmptyState, { ErrorState } from '../components/common/EmptyState'
+import showToast from '../utils/toast'
+import { calculateDiscount } from '../utils/discount'
 import '../styles/search.css'
 
 export default function Search(){
@@ -22,22 +28,38 @@ export default function Search(){
   const [view, setView] = useState('list')
   const [sort, setSort] = useState('priceAsc')
   const [filters, setFilters] = useState({
-    priceMax: 10000000, types: [], amenities: [], guests: 2, checkin:'', checkout:''
+    priceMax: 10000000, priceMin: 1000, types: [], amenities: [], status: [], guests: 1, checkin:'', checkout:''
   })
 
   useEffect(()=>{
     setLoading(true)
+    
+    // Nếu user chọn ngày check-in và check-out => gọi API availability
+    // Nếu không => gọi API search thông thường
+    const hasDateFilter = filters.checkin && filters.checkout
+    const endpoint = hasDateFilter ? '/rooms/availability' : '/rooms/search'
+    
     const params = new URLSearchParams({
       priceMax: String(filters.priceMax ?? ''),
+      priceMin: String(filters.priceMin ?? ''),
       guests: String(filters.guests ?? ''),
-      types: (filters.types || []).join(','),
-      amenities: (filters.amenities || []).join(','),
       sort,
       page: '0',
       size: '50'
     })
+    
+    // Nếu có date filter => dùng API availability
+    if (hasDateFilter) {
+      params.set('checkIn', filters.checkin)
+      params.set('checkOut', filters.checkout)
+    } else {
+      // API search thì có thêm types, amenities, status
+      params.set('types', (filters.types || []).join(','))
+      params.set('amenities', (filters.amenities || []).join(','))
+      params.set('status', (filters.status || []).join(','))
+    }
 
-    const url = `${API}/rooms/search?${params.toString()}`
+    const url = `${API}${endpoint}?${params.toString()}`
     axios.get(url, { headers: { Accept: 'application/json' } })
       .then(r => {
         console.log('🔎 GET', r.request?.responseURL || url, r.data)
@@ -47,41 +69,142 @@ export default function Search(){
         }
         const items = Array.isArray(r.data) ? r.data : (r.data?.items ?? [])
         setRaw(items)
+        if (items.length === 0) {
+          showToast.info('Không tìm thấy phòng phù hợp với tiêu chí tìm kiếm')
+        }
       })
       .catch(e => {
         console.error('Search error:', e)
         setError(e.message)
         setRaw([])
+        showToast.error('Không thể tải danh sách phòng. Vui lòng thử lại!')
       })
       .finally(() => setLoading(false))
   }, [API, filters, sort])
 
-  const rooms = useMemo(()=> raw ?? [], [raw])
-  const clearFilters = ()=> setFilters({ priceMax: 10000000, types: [], amenities: [], guests: 2, checkin:'', checkout:'' })
+  const rooms = useMemo(()=> {
+    let sorted = raw ?? [];
+    
+    // Apply sorting based on sort key
+    if (sort === 'priceAsc') {
+      sorted.sort((a, b) => (a.priceVnd || 0) - (b.priceVnd || 0));
+    } else if (sort === 'priceDesc') {
+      sorted.sort((a, b) => (b.priceVnd || 0) - (a.priceVnd || 0));
+    } else if (sort === 'ratingDesc') {
+      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (sort === 'discountDesc') {
+      // Sort by discount in descending order
+      sorted.sort((a, b) => {
+        const discountA = calculateDiscount(a.priceVnd || 0);
+        const discountB = calculateDiscount(b.priceVnd || 0);
+        return discountB - discountA;
+      });
+    }
+    
+    return sorted;
+  }, [raw, sort])
+  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 1000, types: [], amenities: [], status: [], guests: 1, checkin:'', checkout:'' })
 
   return (
-    <div className="py-4">
+    <motion.div
+      className="py-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <Container className="search-wrap">
         <Row className="g-4">
           <Col lg={4} xl={3}>
-            <FilterSidebar filters={filters} onChange={setFilters} onClear={clearFilters}/>
+            <motion.div
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <FilterSidebar filters={filters} onChange={setFilters} onClear={clearFilters}/>
+            </motion.div>
           </Col>
+          
           <Col lg={8} xl={9}>
-            <SortBar view={view} onView={setView} sort={sort} onSort={setSort}/>
-            {loading && <div className="alert alert-info">Đang tải dữ liệu…</div>}
-            {error && <div className="alert alert-warning">Lỗi: {error}</div>}
-            {!loading && !rooms.length && <div className="alert alert-secondary">Không tìm thấy phòng phù hợp.</div>}
-
-            {view==='list' && rooms.map(r => <RoomCardRow key={r.id} room={r} />)}
-
-            {view==='grid' &&
-              <Row xs={1} md={2} xl={3} className="g-3">
-                {rooms.map(r => <Col key={r.id}><RoomCardRow room={r}/></Col>)}
-              </Row>
-            }
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <SortBar 
+                view={view} 
+                onView={setView} 
+                sort={sort} 
+                onSort={setSort}
+                resultsCount={rooms.length}
+              />
+              
+              {/* Loading State */}
+              {loading && view === 'list' && <ListSkeleton count={5} />}
+              {loading && view === 'grid' && <GridSkeleton cols={3} rows={2} />}
+              
+              {/* Error State */}
+              {!loading && error && (
+                <ErrorState 
+                  message={error}
+                  onRetry={() => window.location.reload()}
+                />
+              )}
+              
+              {/* Empty State */}
+              {!loading && !error && rooms.length === 0 && (
+                <EmptyState
+                  type="noRooms"
+                  onAction={clearFilters}
+                />
+              )}
+              
+              {/* Results - List View */}
+              {!loading && !error && rooms.length > 0 && view === 'list' && (
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    visible: {
+                      transition: {
+                        staggerChildren: 0.1
+                      }
+                    }
+                  }}
+                >
+                  {rooms.map((r, idx) => (
+                    <motion.div
+                      key={r.id}
+                      variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        visible: { opacity: 1, y: 0 }
+                      }}
+                    >
+                      <RoomCardRow room={r} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+              
+              {/* Results - Grid View */}
+              {!loading && !error && rooms.length > 0 && view === 'grid' && (
+                <Row xs={1} md={2} xl={3} className="g-4">
+                  {rooms.map((r, idx) => (
+                    <Col key={r.id}>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: idx * 0.05 }}
+                      >
+                        <RoomCard room={r} />
+                      </motion.div>
+                    </Col>
+                  ))}
+                </Row>
+              )}
+            </motion.div>
           </Col>
         </Row>
       </Container>
-    </div>
+    </motion.div>
   )
 }

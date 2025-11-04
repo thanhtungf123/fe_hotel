@@ -8,8 +8,8 @@ export default function ShowEditAccount() {
   const { id } = useParams();
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving]   = useState(false);
-  const [error, setError]     = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState({
     fullName: "",
@@ -88,21 +88,45 @@ export default function ShowEditAccount() {
         email: form.email?.trim(),
         phoneNumber: form.phoneNumber?.trim(),
         isActive: !!form.isActive,
+        // isActive: form.isActive === true,
+        // active:   form.isActive === true,
         // Nếu có roleId:
         // role: form.roleId ? { id: Number(form.roleId) } : undefined
       };
 
-      // map role_id -> role object nếu user nhập
-      if (form.roleId !== "" && form.roleId !== null) {
-        const rid = Number(form.roleId);
-        if (!Number.isNaN(rid)) payload.role = { id: rid };
-      }
+      // map role_id -> role object (nếu user chọn)
+if (form.roleId && form.roleId !== "") {
+  const rid = Number(form.roleId); // "1" | "2" -> 1 | 2
+  // vì Form.Select chỉ cho 1 hoặc 2 nên không cần validate thêm,
+  // nhưng nếu muốn chắc chắn:
+  if (rid !== 1 && rid !== 2) {
+    setError("Role ID chỉ được 1 (Account) hoặc 2 (Employee).");
+    setSaving(false);
+    return;
+  }
+  payload.role = { id: rid };
+} else {
+  // không chọn -> giữ nguyên role hiện tại (không gửi field role)
+  // nếu bạn muốn ép clear role (hiếm khi cần), có thể đặt payload.role = null;
+}
 
       const params = {};
-      if (form.password && form.password.length > 0) {
+      if (form.password && form.password.length > 0) { //password
         // Gửi password plain qua query param để BE hash
         params.password = form.password;
       }
+      params.active = form.isActive === true; //active
+      // if (form.roleId && form.roleId !== "") { // roleId
+      //   const rid = Number.parseInt(form.roleId, 10);
+      //   if (rid !== 1 && rid !== 2) {
+      //     setError("Role ID chỉ được 1 (Account) hoặc 2 (Employee).");
+      //     setSaving(false);
+      //     return;
+      //   }
+      //   params.roleId = rid;
+      // }
+
+
 
       let ok = false;
       try {
@@ -191,22 +215,21 @@ export default function ShowEditAccount() {
                     id="acc-active"
                     label="Active"
                     checked={!!form.isActive}
-                    onChange={onChange}
+                    onChange={(e) => setForm((s) => ({ ...s, isActive: e.target.checked }))}
                   />
                 </Col>
 
                 <Col md={3}>
                   <Form.Label>Role ID</Form.Label>
-                  <Form.Control
+                  <Form.Select
                     name="roleId"
-                    type="number"
                     value={form.roleId}
-                    onChange={onChange}
-                    placeholder={roleInfo.id ? `Current: ${roleInfo.id} (${roleInfo.name})` : "Enter role id"}
-                  />
-                  <Form.Text className="text-muted">
-                    {roleInfo.name ? `Current role: ${roleInfo.name} (id=${roleInfo.id})` : "Leave blank to keep current role."}
-                  </Form.Text>
+                    onChange={(e) => setForm(s => ({ ...s, roleId: e.target.value }))}
+                  >
+                    <option value="">— Keep current —</option>
+                    <option value="1">1 — Account</option>
+                    <option value="2">2 — Employee</option>
+                  </Form.Select>
                 </Col>
 
                 <Col md={6}>

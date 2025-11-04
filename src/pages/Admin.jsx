@@ -1,121 +1,30 @@
-// src/pages/Admin.jsx
+// Enhanced Admin Page - Luxury Design
 import React, { useEffect, useMemo, useState } from "react";
-import { Container, Row, Col, Table, Spinner, Alert, Form, Badge, Tabs, Tab, Button } from "react-bootstrap";
+import { Container, Row, Col, Table, Alert, Form, Badge, Tabs, Tab, Button } from "react-bootstrap";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import axios from "../api/axiosInstance";
 import { useAuth } from "../store/auth";
-
+import showToast from "../utils/toast";
+import { GridSkeleton } from "../components/common/LoadingSkeleton";
+import RoomManagement from "../components/admin/RoomManagement";
+import ServicesManagement from "../components/admin/ServicesManagement";
+import WalkInBooking from "../components/admin/WalkInBooking";
+import CancelRequestsTab from "../components/admin/CancelRequestsTab";
+import AdminSchedule from "../pages/admin/AdminSchedule";
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  // ---- Handlers
-const handleDeleteAccount = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this account?")) return;
 
-  // helper hiển thị lỗi rõ ràng
-  const showError = (err) => {
-    const msg =
-      err?.response?.data?.message ||
-      err?.response?.data ||
-      err?.message ||
-      "Unknown error";
-    alert(`Delete failed: ${msg}`);
-  };
+  // ---- State (hooks phải đầu tiên)
+  const [accounts, setAccounts] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState({ accounts: true, employees: true });
+  const [error, setError] = useState({ accounts: "", employees: "" });
+  const [qAcc, setQAcc] = useState("");
+  const [qEmp, setQEmp] = useState("");
 
-  try {
-    // Thử endpoint chuẩn Admin trước
-    let res;
-    try {
-      res = await axios.delete(`/admin/accounts/${id}`);
-    } catch (e) {
-      // Fallback nếu BE không có /admin/... (405/404)
-      const code = e?.response?.status;
-      if (code === 404 || code === 405) {
-        res = await axios.delete(`/accounts/${id}`);
-      } else {
-        throw e;
-      }
-    }
-
-    // Thành công (200/204)
-    // Cập nhật UI tại chỗ (không cần navigate)
-    setAccounts((prev) => prev.filter((a) => a.id !== id));
-  } catch (error) {
-    const code = error?.response?.status;
-
-    if (code === 401 || code === 403) {
-      alert("You are not authorized to delete this account.");
-      return;
-    }
-    if (code === 404) {
-      alert("Account not found. It may have been deleted already.");
-      // Có thể loại bỏ khỏi UI luôn
-      setAccounts((prev) => prev.filter((a) => a.id !== id));
-      return;
-    }
-    if (code === 409) {
-      // thường là ràng buộc FK (account đang được link với employee/payments/...)
-      alert("Cannot delete: this account is referenced by other data (e.g., an employee). Unlink/remove dependencies first.");
-      return;
-    }
-
-    console.error("Failed to delete account", error);
-    showError(error);
-  }
-};
-
-  // ---- Create handlers
-  const submitCreateAccount = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      // Gửi đúng field theo entity BE
-      const payload = {
-        fullName: accForm.fullName?.trim(),
-        email: accForm.email?.trim(),
-        phoneNumber: accForm.phoneNumber?.trim(),
-        passwordHash: accForm.passwordHash || "",
-        isActive: !!accForm.isActive,
-        // role: { id: Number(accForm.roleId) } // nếu BE yêu cầu role object
-      };
-      await axios.post("/admin/accounts", payload);
-      setShowCreateAcc(false);
-      setAccForm({ fullName: "", email: "", phoneNumber: "", passwordHash: "", isActive: true });
-      await reloadAccounts();
-    } catch (err) {
-      alert(err?.response?.data || err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const submitCreateEmployee = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      // BE không dùng DTO → nhận trực tiếp entity fields
-      const payload = {
-        position: empForm.position?.trim() || null,
-        department: empForm.department?.trim() || null,
-        hireDate: empForm.hireDate || null,
-        salary: empForm.salary ? Number(empForm.salary) : null,
-        status: empForm.status?.trim() || null
-      };
-      const params = {};
-      if (empForm.accountId) params.accountId = Number(empForm.accountId);
-
-      await axios.post("/employees", payload, { params });
-      setShowCreateEmp(false);
-      setEmpForm({ position: "", department: "", hireDate: "", salary: "", status: "Active", accountId: "" });
-      await reloadEmployees();
-    } catch (err) {
-      alert(err?.response?.data || err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // ---- Guard: only Admin (role === "admin") can view this page
+  // ---- Helper function (có thể ở trước useEffect)
   const getRoleName = () => {
     let rn =
       (typeof user?.role === "string" ? user.role : undefined) ??
@@ -136,17 +45,7 @@ const handleDeleteAccount = async (id) => {
   };
 
   const roleName = getRoleName();
-  if (!user?.token) return <Navigate to="/login" replace />;
-  if (roleName !== "admin") return <Navigate to="/" replace />;
-
-  // ---- State
-  const [accounts, setAccounts] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState({ accounts: true, employees: true });
-  const [error, setError] = useState({ accounts: "", employees: "" });
-  const [qAcc, setQAcc] = useState("");
-  const [qEmp, setQEmp] = useState("");
-
+  // ---- useEffect (hooks phải trước return)
   // ---- Fetch data (điều chỉnh endpoint phù hợp BE của bạn)
   useEffect(() => {
     let alive = true;
@@ -181,6 +80,7 @@ const handleDeleteAccount = async (id) => {
 
     loadAccounts();
     loadEmployees();
+
     return () => { alive = false; };
   }, []);
 
@@ -219,6 +119,107 @@ const handleDeleteAccount = async (id) => {
     );
   }, [employees, qEmp]);
 
+  // ---- Guard: only Admin (role === "admin") can view this page
+
+  // Debug logging
+  console.log("🔐 User:", user);
+  console.log("👤 Role:", roleName);
+  console.log("📊 Accounts:", accounts);
+  console.log("👥 Employees:", employees);
+
+  if (!user?.token) return <Navigate to="/login" replace />;
+  if (roleName !== "admin") return <Navigate to="/" replace />;
+
+  // ---- Handlers
+  const handleDeleteAccount = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this account?")) return;
+
+    // helper hiển thị lỗi rõ ràng
+    const showError = (err) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+      alert(`Delete failed: ${msg}`);
+    };
+
+    try {
+      // Thử endpoint chuẩn Admin trước
+      let res;
+      try {
+        res = await axios.delete(`/admin/accounts/${id}`);
+      } catch (e) {
+        // Fallback nếu BE không có /admin/... (405/404)
+        const code = e?.response?.status;
+        if (code === 404 || code === 405) {
+          res = await axios.delete(`/accounts/${id}`);
+        } else {
+          throw e;
+        }
+      }
+
+      // Thành công (200/204)
+      // Cập nhật UI tại chỗ (không cần navigate)
+      setAccounts((prev) => prev.filter((a) => a.id !== id));
+    } catch (error) {
+      const code = error?.response?.status;
+
+      if (code === 401 || code === 403) {
+        alert("You are not authorized to delete this account.");
+        return;
+      }
+      if (code === 404) {
+        alert("Account not found. It may have been deleted already.");
+        // Có thể loại bỏ khỏi UI luôn
+        setAccounts((prev) => prev.filter((a) => a.id !== id));
+        return;
+      }
+      if (code === 409) {
+        // thường là ràng buộc FK (account đang được link với employee/payments/...)
+        alert("Cannot delete: this account is referenced by other data (e.g., an employee). Unlink/remove dependencies first.");
+        return;
+      }
+
+      console.error("Failed to delete account", error);
+      showError(error);
+    }
+  };
+
+  const handleDeleteEmployee = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this employee?")) return;
+
+    const showError = (err) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+      alert(`Delete failed: ${msg}`);
+    };
+
+    try {
+      // Gọi API cập nhật trạng thái
+      // await axios.put(`/admin/employees/${id}`, { status: "terminated" });
+      await axios.delete(`/admin/employees/${id}`)
+
+      // Cập nhật UI tại chỗ
+      setEmployees((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, status: "terminated" } : it))
+      );
+    } catch (e) {
+      const msg = e?.response?.data?.message || e?.message || "Unknown error";
+      alert(`Deactivate failed: ${msg}`);
+    }
+  };
+
+
+
+
+
+  // ---- StatusBadge component
+
+
   const StatusBadge = ({ value }) => {
     const val = (value ?? "").toString().toLowerCase();
     const variant =
@@ -230,22 +231,59 @@ const handleDeleteAccount = async (id) => {
   };
 
   return (
-    <Container className="py-4">
-      <Row className="mb-3">
-        <Col>
-          <h3 className="mb-0">Admin Dashboard</h3>
-          <div className="text-muted">Manage Accounts & Employees</div>
-        </Col>
-        <Col className="text-end">
-          <Button as={Link} to="/employee" variant="outline-secondary" className="me-2">Go to Employee</Button>
-          <Button as={Link} to="/" variant="dark">Back to Home</Button>
-        </Col>
-      </Row>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Container className="py-4" style={{ maxWidth: "1400px" }}>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Row className="mb-4 align-items-center">
+            <Col>
+              <h2 
+                className="mb-1" 
+                style={{ 
+                  fontFamily: "Playfair Display, serif",
+                  color: "var(--primary-dark)"
+                }}
+              >
+                🏨 Admin Dashboard
+              </h2>
+              <div className="text-muted">Quản lý Khách hàng, Nhân viên & Phòng</div>
+            </Col>
+            <Col className="text-end">
+              <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
+                Đến trang Nhân viên
+              </Button>
+              <Button 
+                as={Link} 
+                to="/" 
+                style={{ 
+                  background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)",
+                  border: "none",
+                  borderRadius: "10px"
+                }}
+              >
+                Về trang chủ
+              </Button>
+            </Col>
+          </Row>
+        </motion.div>
 
-
-      <Tabs defaultActiveKey="accounts" id="admin-tabs" className="mb-4">
+        <Tabs 
+          defaultActiveKey="accounts" 
+          id="admin-tabs" 
+          className="mb-4"
+          style={{
+            borderBottom: "2px solid rgba(201, 162, 74, 0.3)"
+          }}
+        >
         {/* -------- Accounts -------- */}
-        <Tab eventKey="accounts" title={`Accounts (${accounts.length})`}>
+        <Tab eventKey="accounts" title={`Customer (${accounts.length})`}>
           <Row className="mb-3">
             <Col md={6}>
               <Form.Control
@@ -262,7 +300,7 @@ const handleDeleteAccount = async (id) => {
           </Row>
 
           {loading.accounts ? (
-            <div className="py-5 text-center"><Spinner animation="border" /> Loading accounts…</div>
+            <GridSkeleton cols={1} rows={1} />
           ) : error.accounts ? (
             <Alert variant="danger">Failed to load accounts: {error.accounts}</Alert>
           ) : (
@@ -289,7 +327,7 @@ const handleDeleteAccount = async (id) => {
                         <td>{a.id}</td>
                         <td>{a.fullName || "-"}</td>
                         <td>{a.email || "-"}</td>
-                        <td>{a.phone || "-"}</td>
+                        <td>{a.phoneNumber || "-"}</td>
                         <td className="text-capitalize">{roleLabel || "-"}</td>
                         <td><StatusBadge value={a.isActive ? "Active" : "Disabled"} /></td>
                         <td className="text-nowrap">
@@ -305,6 +343,11 @@ const handleDeleteAccount = async (id) => {
           )}
         </Tab>
 
+        {/* -------- Rooms -------- */}
+        <Tab eventKey="rooms" title="Quản lý phòng">
+          <RoomManagement />
+        </Tab>
+
         {/* -------- Employees -------- */}
         <Tab eventKey="employees" title={`Employees (${employees.length})`}>
           <Row className="mb-3">
@@ -316,14 +359,15 @@ const handleDeleteAccount = async (id) => {
               />
             </Col>
             <Col className="text-end">
-              <Button onClick={() => setShowCreateEmp(true)} variant="primary">
+              {/* <Button onClick={() => setShowCreateEmp(true)} variant="primary"> */}
+              <Button as={Link} to="/admin/employee/create" variant="primary">
                 + Create Employee
               </Button>
             </Col>
           </Row>
 
           {loading.employees ? (
-            <div className="py-5 text-center"><Spinner animation="border" /> Loading employees…</div>
+            <GridSkeleton cols={1} rows={1} />
           ) : error.employees ? (
             <Alert variant="danger">Failed to load employees: {error.employees}</Alert>
           ) : (
@@ -345,21 +389,21 @@ const handleDeleteAccount = async (id) => {
                 </thead>
                 <tbody>
                   {filteredEmployees.length === 0 ? (
-                    <tr><td colSpan={8} className="text-center text-muted py-4">No employees found</td></tr>
+                    <tr><td colSpan={9} className="text-center text-muted py-4">No employees found</td></tr>
                   ) : filteredEmployees.map((e) => (
                     <tr key={e.id}>
                       <td>{e.id}</td>
                       <td>{e.employeeCode || e.fullName || "-"}</td>
-                      <td>{e.account || "-"}</td>
-                      <td>{e.account.phone || "-"}</td>
+                      <td>{e.account?.email || "-"}</td>
+                      <td>{e.account?.phone || "-"}</td>
                       <td>{e.position || "-"}</td>
                       <td>{e.department || "-"}</td>
                       <td>{e.salary || "-"}</td>
                       <td>{e.hireDate || "-"}</td>
                       <td><StatusBadge value={e.status} /></td>
                       <td className="text-nowrap">
-                        <Button as={Link} to={`/employee/${e.id}/delete`} size="sm" variant="outline-primary" className="me-2">Deactive</Button>
-                        <Button as={Link} to={`/employee/${e.id}/edit`} size="sm" variant="outline-secondary">Edit</Button>
+                        <Button size="sm" variant="outline-warning" className="me-2" onClick={() => handleDeleteEmployee(e.id)}> Deactivate </Button>
+                        <Button as={Link} to={`/admin/employees/${e.id}`} size="sm" variant="outline-secondary">Edit</Button>
                       </td>
                     </tr>
                   ))}
@@ -368,7 +412,26 @@ const handleDeleteAccount = async (id) => {
             </div>
           )}
         </Tab>
-      </Tabs>
-    </Container>
+        {/* -------- Services -------- */}
+        <Tab eventKey="services" title="Quản lý dịch vụ">
+          <ServicesManagement />
+        </Tab>
+        
+        {/* -------- Walk-in Booking -------- */}
+        <Tab eventKey="walkin" title="🏨 Đặt phòng trực tiếp">
+          <WalkInBooking />
+        </Tab>
+        
+        {/* -------- Cancel Requests -------- */}
+        <Tab eventKey="cancels" title="❌ Duyệt huỷ đặt phòng">
+          <CancelRequestsTab />
+        </Tab>
+        {/* -------- Admin Schedule -------- */}
+        <Tab eventKey="schedule" title="Lịch làm việc">
+          <AdminSchedule />
+        </Tab>
+        </Tabs>
+      </Container>
+    </motion.div>
   );
 }
