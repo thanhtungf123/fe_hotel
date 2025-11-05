@@ -20,8 +20,16 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("auth");
   };
 
+  const updateUser = (updates) => {
+    setUser(prev => {
+      const updated = { ...prev, ...updates };
+      localStorage.setItem("auth", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
-    <AuthCtx.Provider value={{ user, login, logout }}>
+    <AuthCtx.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthCtx.Provider>
   );

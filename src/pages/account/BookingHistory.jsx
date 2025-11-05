@@ -4,6 +4,8 @@ import axios from "../../api/axiosInstance";
 import { useAuth } from "../../store/auth";
 import { Link, useNavigate } from "react-router-dom";
 import CancelModal from "./CancelModal";
+import PaymentButton from "../../components/PaymentButton";
+import ReviewModal from "../../components/review/ReviewModal";
 import "../../styles/account.css";
 
 const fmtVnd = (n) => (Number(n) || 0).toLocaleString("vi-VN") + "₫";
@@ -24,6 +26,10 @@ export default function BookingHistory() {
   const [target, setTarget] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelErr, setCancelErr] = useState("");
+
+  // review modal state
+  const [reviewTarget, setReviewTarget] = useState(null);
+
 
   // nếu chưa login -> điều hướng
   useEffect(() => {
@@ -83,6 +89,10 @@ export default function BookingHistory() {
     );
   };
 
+  const canPayBalance = (b) =>
+    String(b.paymentState).toLowerCase()==='deposit_paid' &&
+    Number(b.amountRemaining || 0) > 0;
+
   const canRequestCancel = (s) =>
     ["pending", "confirmed"].includes(String(s).toLowerCase());
 
@@ -132,57 +142,75 @@ export default function BookingHistory() {
           <Alert variant="secondary">Không có đặt phòng nào.</Alert>
         )}
 
-        <Row className="g-3">
-          {data?.items?.map((b) => (
-            <Col md={12} key={b.id}>
-              <Card className="card-soft">
-                <Card.Body>
-                  <div className="d-flex gap-3 align-items-center">
-                    <img
-                      src={b.roomImageUrl}
-                      alt={b.roomName}
-                      style={{ width: 140, height: 90, objectFit: "cover", borderRadius: 8 }}
-                    />
-                    <div className="flex-grow-1">
-                      <div className="d-flex justify-content-between">
-                        <div>
-                          <div className="fw-semibold">{b.roomName}</div>
-                          <div className="text-muted small">
-                            🗓 {b.checkIn} → {b.checkOut} &nbsp;•&nbsp; {b.nights} đêm
-                          </div>
-                          <div className="text-muted small">
-                            👥 {b.guests ?? 0} khách &nbsp;•&nbsp; 🛏 {b.bedLayout || "-"}
-                          </div>
-                        </div>
-                        <div className="text-end">
-                          {badge(b.status)}
-                          <div className="mt-2 fw-bold text-danger">{fmtVnd(b.totalPrice)}</div>
+<Row className="g-3">
+        {data?.items?.map((b) => (
+          <Col md={12} key={b.id}>
+            <Card className="card-soft">
+              <Card.Body>
+                <div className="d-flex gap-3 align-items-center">
+                  <img src={b.roomImageUrl} alt={b.roomName} style={{ width: 140, height: 90, objectFit: "cover", borderRadius: 8 }}/>
+                  <div className="flex-grow-1">
+                    <div className="d-flex justify-content-between">
+                      <div>
+                        <div className="fw-semibold">{b.roomName}</div>
+                        <div className="text-muted small">🗓 {b.checkIn} → {b.checkOut} &nbsp;•&nbsp; {b.nights} đêm</div>
+                        <div className="text-muted small">👥 {b.guests ?? 0} khách &nbsp;•&nbsp; 🛏 {b.bedLayout || "-"}</div>
+                        {/* NEW: Payment info */}
+                        <div className="small mt-1">
+                          Thanh toán: <b>{(b.paymentState||'unpaid').replaceAll('_',' ')}</b>
+                          {Number(b.amountPaid||0)>0 && <> &nbsp;• Đã trả: <b>{fmtVnd(b.amountPaid)}</b></>}
+                          {Number(b.amountRemaining||0)>0 && <> &nbsp;• Còn lại: <b className="text-danger">{fmtVnd(b.amountRemaining)}</b></>}
                         </div>
                       </div>
+                      <div className="text-end">
+                        {badge(b.status)}
+                        <div className="mt-2 fw-bold text-danger">{fmtVnd(b.totalPrice)}</div>
+                      </div>
+                    </div>
 
-                      <div className="mt-2 d-flex gap-2">
+                    <div className="mt-2 d-flex gap-2 flex-wrap">
                         <Button as={Link} to={`/rooms/${b.roomId}`} variant="light" className="border">
                           Xem phòng
                         </Button>
+
+                        {/* Yêu cầu huỷ như cũ */}
                         {canRequestCancel(b.status) && (
-                          <Button
-                            variant="outline-danger"
-                            onClick={() => {
-                              setCancelErr("");
-                              setTarget(b);
-                            }}
-                          >
+                          <Button variant="outline-danger" onClick={() => { setCancelErr(""); setTarget(b); }}>
                             Yêu cầu huỷ
                           </Button>
                         )}
+
+                        {/* NEW: Thanh toán phần còn lại */}
+                        {String(b.status).toLowerCase()==='confirmed' && Number(b.amountRemaining)>0 && (
+                          <div style={{minWidth: 240}}>
+                            <PaymentButton
+                              bookingId={b.id}
+                              totalPrice={b.amountRemaining}
+                              purpose="balance"
+                              label="Thanh toán phần còn lại"
+                            />
+                          </div>
+                        )}
+
+                        {/* NEW: Viết đánh giá */}
+                        {(String(b.status).toLowerCase() === 'checked_out' || 
+                          String(b.status).toLowerCase() === 'completed') && (
+                          <Button 
+                            variant="outline-primary" 
+                            onClick={() => setReviewTarget(b)}
+                          >
+                            ⭐ Viết đánh giá
+                          </Button>
+                        )}
                       </div>
-                    </div>
+
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
 
         {totalPages > 1 && (
           <div className="d-flex justify-content-center mt-3">
@@ -210,6 +238,14 @@ export default function BookingHistory() {
           onSubmit={submitCancel}
           loading={cancelLoading}
           error={cancelErr}
+        />
+
+        <ReviewModal
+          show={!!reviewTarget}
+          onHide={() => setReviewTarget(null)}
+          bookingId={reviewTarget?.id}
+          roomId={reviewTarget?.roomId}
+          onSuccess={load}
         />
       </div>
     </main>
