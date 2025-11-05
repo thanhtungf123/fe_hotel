@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import './styles/toastify-custom.css'
 import TopNavbar from './layout/TopNavbar'
 import Footer from './layout/Footer'
+import Chatbot from './components/chatbot/Chatbot'
 import Home from './pages/Home'
 import Search from './pages/Search'
 import RoomDetail from './pages/RoomDetail'
@@ -31,6 +32,8 @@ import ShowEditServices from './pages/admin/ShowEditServices';
 import AdminSchedule from "./pages/admin/AdminSchedule";
 import AdminCreateSchedule from './pages/admin/AdminCreateSchedule'
 import AdminEditSchedule from './pages/admin/AdminEditSchedule'
+import Reports from './pages/admin/Reports'
+import Statistics from './pages/admin/Statistics'
 // --- Booking ---
 import Booking from './pages/Booking'
 
@@ -89,6 +92,8 @@ export default function App() {
         <Route path="/admin/schedules" element={<AdminSchedule />} />
         <Route path="/admin/schedules/create" element={<AdminCreateSchedule />} />
         <Route path="/admin/schedules/:shiftId" element={<AdminEditSchedule />} />
+        <Route path="/admin/reports" element={<Reports />} />
+        <Route path="/admin/statistics" element={<Statistics />} />
 
 
         {/* Payment */}
@@ -97,6 +102,7 @@ export default function App() {
         <Route path="/payment/history" element={<PaymentHistory />} />
       </Routes>
       <Footer />
+      <Chatbot />
     </div>
   )
 }

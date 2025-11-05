@@ -256,6 +256,12 @@ export default function Admin() {
               <div className="text-muted">Quản lý Khách hàng, Nhân viên & Phòng</div>
             </Col>
             <Col className="text-end">
+              <Button as={Link} to="/admin/reports" variant="warning" className="me-2" style={{ borderRadius: "10px" }}>
+                📊 Báo cáo
+              </Button>
+              <Button as={Link} to="/admin/statistics" variant="outline-warning" className="me-2" style={{ borderRadius: "10px" }}>
+                📈 Thống kê nhanh
+              </Button>
               <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
                 Đến trang Nhân viên
               </Button>
@@ -418,12 +424,12 @@ export default function Admin() {
         </Tab>
         
         {/* -------- Walk-in Booking -------- */}
-        <Tab eventKey="walkin" title="🏨 Đặt phòng trực tiếp">
+        <Tab eventKey="walkin" title=" Đặt phòng trực tiếp">
           <WalkInBooking />
         </Tab>
         
         {/* -------- Cancel Requests -------- */}
-        <Tab eventKey="cancels" title="❌ Duyệt huỷ đặt phòng">
+        <Tab eventKey="cancels" title="Duyệt huỷ đặt phòng">
           <CancelRequestsTab />
         </Tab>
         {/* -------- Admin Schedule -------- */}
