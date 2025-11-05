@@ -1,28 +1,64 @@
 // Enhanced FilterSidebar - Professional Filtering UI
 import React, { useEffect, useState } from 'react';
-import { Card, Form, Button, Badge } from 'react-bootstrap';
+import { Card, Form, Button, Badge, Row, Col } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import axios from '../../api/axiosInstance';
 import showToast from '../../utils/toast';
 
-export default function FilterSidebar({ filters, onChange, onClear }) {
+function FilterSidebar({ filters, onChange, onClear }) {
   const update = (k, v) => onChange({ ...filters, [k]: v });
 
-  // Map đúng các layout trong DB
-  const typeOptions = [
-    '1 giường đơn', '2 giường đơn', '3 giường đơn',
-    '1 giường đôi', '1 giường đôi lớn', '2 giường đôi',
-    '1 giường đơn 1 giường đôi'
-  ];
-  
   const amenityOptions = [
-    'WiFi miễn phí', 'Ban công', 'Tầm nhìn biển', 
-    'Tầm nhìn thành phố', 'Bồn tắm jacuzzi', 'Minibar'
+    'Chỗ đỗ xe',
+    'Nhà hàng',
+    'Dịch vụ phòng',
+    'Lễ tân 24 giờ',
+    'Trung tâm thể dục',
+    'Phòng không hút thuốc',
+    'Xe đưa đón sân bay',
+    'Trung tâm Spa & chăm sóc sức khoẻ',
+    'Bồn tắm nóng/bể sục (Jacuzzi)',
+    'WiFi miễn phí',
+    'Trạm sạc xe điện',
+    'Lối vào cho người đi xe lăn',
+    'Ban công',
+    'Tầm nhìn biển',
+    'Tầm nhìn thành phố',
+    'Bồn tắm jacuzzi',
+    'Minibar',
+    'Điều hòa',
+    'TV',
+    'Phòng tắm riêng',
+    'Bàn làm việc',
+    'Tủ lạnh',
+    'Máy pha cà phê',
+    'Két an toàn',
+    'Điện thoại',
+    'Hệ thống âm thanh',
+    'Dịch vụ phòng 24/7',
+    'Vòi sen massage',
+    'Bồn tắm'
   ];
 
   // Services
   const [svcLoading, setSvcLoading] = useState(false);
   const [serviceOptions, setServiceOptions] = useState([]);
+
+  // Amenity counts
+  const [amenityCounts, setAmenityCounts] = useState({});
+  const [loadingAmenityCounts, setLoadingAmenityCounts] = useState(false);
+
+  const fetchAmenityCounts = async () => {
+    setLoadingAmenityCounts(true);
+    try {
+      const { data } = await axios.get('/rooms/amenities/counts');
+      setAmenityCounts(data || {});
+    } catch (err) {
+      console.error('Failed to load amenity counts:', err);
+    } finally {
+      setLoadingAmenityCounts(false);
+    }
+  };
 
   const fetchServices = async () => {
     setSvcLoading(true);
@@ -55,13 +91,13 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
 
   useEffect(() => {
     fetchServices();
+    fetchAmenityCounts();
   }, []);
 
   const formatVND = v => Number(v).toLocaleString('vi-VN') + '₫';
 
   // Count active filters
   const activeFiltersCount = 
-    (filters.types?.length || 0) + 
     (filters.amenities?.length || 0) + 
     (filters.status?.length || 0) +
     (filters.serviceIds?.length || 0);
@@ -113,17 +149,30 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
             </Form.Group>
             <Form.Group>
               <Form.Label className="small fw-semibold text-muted">Số khách</Form.Label>
-              <Form.Select
-                value={filters.guests || 2}
-                onChange={e => update('guests', Number(e.target.value))}
-                style={{ borderRadius: '8px' }}
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                  <option key={num} value={num}>
-                    {num} {num === 1 ? 'khách' : 'khách'}
-                  </option>
-                ))}
-              </Form.Select>
+              <Row className="g-2">
+                <Col xs={6}>
+                  <Form.Select
+                    value={filters.adults || 2}
+                    onChange={e => update('adults', Number(e.target.value))}
+                    style={{ borderRadius: '8px', fontSize: '0.9rem' }}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                      <option key={num} value={num}>{num} người lớn</option>
+                    ))}
+                  </Form.Select>
+                </Col>
+                <Col xs={6}>
+                  <Form.Select
+                    value={filters.children || 0}
+                    onChange={e => update('children', Number(e.target.value))}
+                    style={{ borderRadius: '8px', fontSize: '0.9rem' }}
+                  >
+                    {[0, 1, 2, 3, 4, 5, 6].map(num => (
+                      <option key={num} value={num}>{num} trẻ em</option>
+                    ))}
+                  </Form.Select>
+                </Col>
+              </Row>
             </Form.Group>
           </Card.Body>
         </Card>
@@ -166,7 +215,7 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
         </Card>
       </motion.div>
 
-      {/* Loại giường */}
+      {/* Tiện nghi */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -175,53 +224,41 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
         <Card className="card-soft mb-3">
           <Card.Body>
             <Card.Title className="h6 mb-3 d-flex align-items-center gap-2">
-              🛏️ Loại giường
-            </Card.Title>
-            {typeOptions.map((t, idx) => (
-              <Form.Check 
-                key={t} 
-                type="checkbox" 
-                className="mb-2"
-                label={t}
-                checked={filters.types?.includes(t) || false}
-                onChange={e => {
-                  const set = new Set(filters.types || []);
-                  e.target.checked ? set.add(t) : set.delete(t);
-                  update('types', Array.from(set));
-                }}
-                style={{ fontSize: '0.9rem' }}
-              />
-            ))}
-          </Card.Body>
-        </Card>
-      </motion.div>
-
-      {/* Tiện nghi */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <Card className="card-soft mb-3">
-          <Card.Body>
-            <Card.Title className="h6 mb-3 d-flex align-items-center gap-2">
               ✨ Tiện nghi
             </Card.Title>
-            {amenityOptions.map(a => (
-              <Form.Check 
-                key={a} 
-                type="checkbox" 
-                className="mb-2"
-                label={a}
-                checked={filters.amenities?.includes(a) || false}
-                onChange={e => {
-                  const set = new Set(filters.amenities || []);
-                  e.target.checked ? set.add(a) : set.delete(a);
-                  update('amenities', Array.from(set));
-                }}
-                style={{ fontSize: '0.9rem' }}
-              />
-            ))}
+            {loadingAmenityCounts ? (
+              <div className="text-center py-2 text-muted small">
+                <div className="spinner-border spinner-border-sm" role="status">
+                  <span className="visually-hidden">Đang tải...</span>
+                </div>
+              </div>
+            ) : (
+              amenityOptions.map(a => {
+                const count = amenityCounts[a] || 0;
+                return (
+                  <Form.Check 
+                    key={a} 
+                    type="checkbox" 
+                    className="mb-2"
+                    label={
+                      <div className="d-flex justify-content-between align-items-center w-100">
+                        <span>{a}</span>
+                        <Badge bg="light" text="dark" className="ms-2" style={{ fontSize: '0.75rem', fontWeight: '500' }}>
+                          {count}
+                        </Badge>
+                      </div>
+                    }
+                    checked={filters.amenities?.includes(a) || false}
+                    onChange={e => {
+                      const set = new Set(filters.amenities || []);
+                      e.target.checked ? set.add(a) : set.delete(a);
+                      update('amenities', Array.from(set));
+                    }}
+                    style={{ fontSize: '0.9rem' }}
+                  />
+                );
+              })
+            )}
           </Card.Body>
         </Card>
       </motion.div>
@@ -328,3 +365,5 @@ export default function FilterSidebar({ filters, onChange, onClear }) {
     </div>
   );
 }
+
+export default FilterSidebar;

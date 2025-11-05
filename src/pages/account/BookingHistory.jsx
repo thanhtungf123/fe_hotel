@@ -154,7 +154,9 @@ export default function BookingHistory() {
                       <div>
                         <div className="fw-semibold">{b.roomName}</div>
                         <div className="text-muted small">🗓 {b.checkIn} → {b.checkOut} &nbsp;•&nbsp; {b.nights} đêm</div>
-                        <div className="text-muted small">👥 {b.guests ?? 0} khách &nbsp;•&nbsp; 🛏 {b.bedLayout || "-"}</div>
+                        <div className="text-muted small">
+                          👥 {b.adults ? `${b.adults} người lớn` : ''} {b.children && b.children > 0 ? `, ${b.children} trẻ em` : ''} {!b.adults && !b.children ? `${b.guests ?? 0} khách` : ''} &nbsp;•&nbsp; 🛏 {b.bedLayout || "-"}
+                        </div>
                         {/* NEW: Payment info */}
                         <div className="small mt-1">
                           Thanh toán: <b>{(b.paymentState||'unpaid').replaceAll('_',' ')}</b>
@@ -192,14 +194,16 @@ export default function BookingHistory() {
                           </div>
                         )}
 
-                        {/* NEW: Viết đánh giá */}
-                        {(String(b.status).toLowerCase() === 'checked_out' || 
+                        {/* Viết đánh giá - Cho phép khi đã confirmed (đã đặt phòng thành công) */}
+                        {(String(b.status).toLowerCase() === 'confirmed' || 
+                          String(b.status).toLowerCase() === 'checked_in' ||
+                          String(b.status).toLowerCase() === 'checked_out' || 
                           String(b.status).toLowerCase() === 'completed') && (
                           <Button 
                             variant="outline-primary" 
                             onClick={() => setReviewTarget(b)}
                           >
-                            ⭐ Viết đánh giá
+                            Viết đánh giá
                           </Button>
                         )}
                       </div>

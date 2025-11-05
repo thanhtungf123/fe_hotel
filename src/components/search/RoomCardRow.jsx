@@ -53,7 +53,7 @@ export default function RoomCardRow({ room }) {
             )}
             
             <LazyLoadImage
-              src={room.imageUrl}
+              src={room.imageUrl || 'https://via.placeholder.com/400x300/f0f0f0/999999?text=🏨'}
               alt={room.name}
               effect="blur"
               className="w-100 h-100"
@@ -63,6 +63,9 @@ export default function RoomCardRow({ room }) {
                 transition: 'transform 0.5s ease'
               }}
               placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em' style='font-size:24px'%3E🏨%3C/text%3E%3C/svg%3E"
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/400x300/f0f0f0/999999?text=🏨';
+              }}
             />
 
             {/* Reviews Badge Overlay */}

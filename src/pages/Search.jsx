@@ -4,7 +4,7 @@ import { Container, Row, Col } from 'react-bootstrap'
 import { motion } from 'framer-motion'
 import axios from 'axios'
 import SortBar from '../components/search/SortBar'
-import FilterSidebar from '../components/search/FilterSidebar'
+import FilterSidebar from '../components/search/FilterSidebar.jsx'
 import RoomCardRow from '../components/search/RoomCardRow'
 import RoomCard from '../components/home/RoomCard'
 import { ListSkeleton, GridSkeleton } from '../components/common/LoadingSkeleton'
@@ -28,7 +28,8 @@ export default function Search(){
   const [view, setView] = useState('list')
   const [sort, setSort] = useState('priceAsc')
   const [filters, setFilters] = useState({
-    priceMax: 10000000, priceMin: 1000, types: [], amenities: [], status: [], guests: 1, checkin:'', checkout:''
+    priceMax: 10000000, priceMin: 1000, amenities: [], status: [], 
+    adults: 2, children: 0, checkin:'', checkout:''
   })
 
   useEffect(()=>{
@@ -39,10 +40,11 @@ export default function Search(){
     const hasDateFilter = filters.checkin && filters.checkout
     const endpoint = hasDateFilter ? '/rooms/availability' : '/rooms/search'
     
+    const totalGuests = (filters.adults || 2) + (filters.children || 0)
     const params = new URLSearchParams({
       priceMax: String(filters.priceMax ?? ''),
       priceMin: String(filters.priceMin ?? ''),
-      guests: String(filters.guests ?? ''),
+      guests: String(totalGuests),
       sort,
       page: '0',
       size: '50'
@@ -53,8 +55,7 @@ export default function Search(){
       params.set('checkIn', filters.checkin)
       params.set('checkOut', filters.checkout)
     } else {
-      // API search thì có thêm types, amenities, status
-      params.set('types', (filters.types || []).join(','))
+      // API search thì có thêm amenities, status
       params.set('amenities', (filters.amenities || []).join(','))
       params.set('status', (filters.status || []).join(','))
     }
@@ -68,6 +69,10 @@ export default function Search(){
           throw new Error('Nhận về non-JSON (có thể là index.html). Kiểm tra URL/proxy.')
         }
         const items = Array.isArray(r.data) ? r.data : (r.data?.items ?? [])
+        console.log('📦 Rooms data:', items.length, 'rooms found')
+        if (items.length > 0) {
+          console.log('📷 First room imageUrl:', items[0]?.imageUrl)
+        }
         setRaw(items)
         if (items.length === 0) {
           showToast.info('Không tìm thấy phòng phù hợp với tiêu chí tìm kiếm')
@@ -103,7 +108,7 @@ export default function Search(){
     
     return sorted;
   }, [raw, sort])
-  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 1000, types: [], amenities: [], status: [], guests: 1, checkin:'', checkout:'' })
+  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 1000, amenities: [], status: [], adults: 2, children: 0, checkin:'', checkout:'' })
 
   return (
     <motion.div

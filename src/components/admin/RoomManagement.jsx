@@ -427,7 +427,6 @@ export default function RoomManagement() {
         onHide={handleModalClose}
         onSuccess={handleModalSuccess}
         room={editingRoom}
-        bedLayouts={bedLayouts}
       />
 
       {/* Confirmation Modal */}

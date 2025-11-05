@@ -8,7 +8,8 @@ export default function HeroSearch() {
   const navigate = useNavigate()
   const [checkin, setCheckin] = useState('')
   const [checkout, setCheckout] = useState('')
-  const [guests, setGuests] = useState(2)
+  const [adults, setAdults] = useState(2)
+  const [children, setChildren] = useState(0)
   
   // Parallax effect
   const { scrollY } = useScroll()
@@ -27,10 +28,11 @@ export default function HeroSearch() {
 
   const onSubmit = (e) => {
     e.preventDefault()
+    const totalGuests = adults + children
     const params = new URLSearchParams({
       checkin,
       checkout,
-      guests: String(guests)
+      guests: String(totalGuests)
     })
     navigate(`/search?${params.toString()}`)
   }
@@ -134,17 +136,30 @@ export default function HeroSearch() {
                         <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
                           Số khách
                         </Form.Label>
-                        <Form.Select
-                          value={guests}
-                          onChange={(e) => setGuests(Number(e.target.value))}
-                          style={{ borderRadius: '8px', padding: '0.75rem' }}
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                            <option key={num} value={num}>
-                              {num} {num === 1 ? 'khách' : 'khách'}
-                            </option>
-                          ))}
-                        </Form.Select>
+                        <Row className="g-2">
+                          <Col xs={6}>
+                            <Form.Select
+                              value={adults}
+                              onChange={(e) => setAdults(Number(e.target.value))}
+                              style={{ borderRadius: '8px', padding: '0.5rem', fontSize: '0.9rem' }}
+                            >
+                              {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                                <option key={num} value={num}>{num} người lớn</option>
+                              ))}
+                            </Form.Select>
+                          </Col>
+                          <Col xs={6}>
+                            <Form.Select
+                              value={children}
+                              onChange={(e) => setChildren(Number(e.target.value))}
+                              style={{ borderRadius: '8px', padding: '0.5rem', fontSize: '0.9rem' }}
+                            >
+                              {[0, 1, 2, 3, 4, 5, 6].map(num => (
+                                <option key={num} value={num}>{num} trẻ em</option>
+                              ))}
+                            </Form.Select>
+                          </Col>
+                        </Row>
                       </Form.Group>
                 </Col>
                     

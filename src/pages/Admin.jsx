@@ -251,16 +251,13 @@ export default function Admin() {
                   color: "var(--primary-dark)"
                 }}
               >
-                🏨 Admin Dashboard
+                Admin Dashboard
               </h2>
               <div className="text-muted">Quản lý Khách hàng, Nhân viên & Phòng</div>
             </Col>
             <Col className="text-end">
               <Button as={Link} to="/admin/reports" variant="warning" className="me-2" style={{ borderRadius: "10px" }}>
-                📊 Báo cáo
-              </Button>
-              <Button as={Link} to="/admin/statistics" variant="outline-warning" className="me-2" style={{ borderRadius: "10px" }}>
-                📈 Thống kê nhanh
+                Báo cáo
               </Button>
               <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
                 Đến trang Nhân viên
