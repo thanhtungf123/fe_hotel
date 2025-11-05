@@ -47,10 +47,10 @@ export default function RoomRating({ roomId }) {
     <>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <Card.Title className="h4 mb-0" style={{ fontFamily: 'Playfair Display, serif' }}>
-          💬 Đánh giá của khách
+          Đánh giá của khách
         </Card.Title>
         <Badge bg="warning" text="dark" className="px-3 py-2" style={{ fontSize: '1.1rem' }}>
-          ⭐ {avg.toFixed(1)} ({total} đánh giá)
+          {avg.toFixed(1)} ({total} đánh giá)
         </Badge>
       </div>
 
@@ -62,7 +62,7 @@ export default function RoomRating({ roomId }) {
             return (
               <div key={star} className="d-flex align-items-center gap-3 mb-2">
                 <span className="small fw-semibold" style={{ width: '60px' }}>
-                  {star} ⭐
+                  {star} sao
                 </span>
                 <div
                   className="flex-grow-1 bg-light rounded"
@@ -89,4 +89,5 @@ export default function RoomRating({ roomId }) {
     </>
   )
 }
+
 

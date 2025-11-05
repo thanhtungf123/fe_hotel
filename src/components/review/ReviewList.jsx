@@ -65,7 +65,6 @@ export default function ReviewList({ roomId }) {
       {reviews.length === 0 ? (
         <Card>
           <Card.Body className="text-center text-muted py-5">
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💭</div>
             <p className="mb-2 fw-semibold">Chưa có đánh giá nào</p>
             <p className="small">Hãy là người đầu tiên đánh giá phòng này!</p>
           </Card.Body>
@@ -97,7 +96,7 @@ export default function ReviewList({ roomId }) {
                 <div className="d-flex align-items-center gap-2 mb-2">
                   <div className="fw-semibold">{review.accountName || 'Khách hàng'}</div>
                   <Badge bg="warning" text="dark">
-                    ⭐ {review.rating}
+                    {review.rating} sao
                   </Badge>
                 </div>
                 {review.comment && (
@@ -116,4 +115,5 @@ export default function ReviewList({ roomId }) {
     </div>
   )
 }
+
 

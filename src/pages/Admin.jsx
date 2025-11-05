@@ -18,7 +18,6 @@ export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // ---- State
   const [accounts, setAccounts] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState({ accounts: true, employees: true });
@@ -26,7 +25,6 @@ export default function Admin() {
   const [qAcc, setQAcc] = useState("");
   const [qEmp, setQEmp] = useState("");
 
-  // ---- Helper function
   const getRoleName = () => {
     let rn =
       (typeof user?.role === "string" ? user.role : undefined) ??
@@ -48,7 +46,6 @@ export default function Admin() {
 
   const roleName = getRoleName();
 
-  // ---- Fetch data
   useEffect(() => {
     let alive = true;
 
@@ -84,7 +81,6 @@ export default function Admin() {
     return () => { alive = false; };
   }, []);
 
-  // ---- Helpers
   const norm = (v) => (v ?? "").toString().toLowerCase();
 
   const filteredAccounts = useMemo(() => {
@@ -115,11 +111,9 @@ export default function Admin() {
     );
   }, [employees, qEmp]);
 
-  // ---- Guard
   if (!user?.token) return <Navigate to="/login" replace />;
   if (roleName !== "admin") return <Navigate to="/" replace />;
 
-  // ---- Handlers
   const handleDeleteAccount = async (id) => {
     if (!window.confirm("Are you sure you want to delete this account?")) return;
 
@@ -169,7 +163,6 @@ export default function Admin() {
     }
   };
 
-  // ---- StatusBadge component
   const StatusBadge = ({ value }) => {
     const val = (value ?? "").toString().toLowerCase();
     const variant =
@@ -180,24 +173,26 @@ export default function Admin() {
     return <Badge bg={variant} className="text-uppercase">{value ?? "N/A"}</Badge>;
   };
 
-  // ---- Render
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
       <Container className="py-4" style={{ maxWidth: "1400px" }}>
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Row className="mb-4 align-items-center">
             <Col>
-              <h2 className="mb-1" style={{ fontFamily: "Playfair Display, serif", color: "var(--primary-dark)" }}>
+              <h2
+                className="mb-1"
+                style={{
+                  fontFamily: "Playfair Display, serif",
+                  color: "var(--primary-dark)"
+                }}
+              >
                 🏨 Admin Dashboard
               </h2>
               <div className="text-muted">Quản lý Khách hàng, Nhân viên & Phòng</div>
             </Col>
             <Col className="text-end">
               <Button as={Link} to="/admin/reports" variant="warning" className="me-2" style={{ borderRadius: "10px" }}>
-                📊 Báo cáo
-              </Button>
-              <Button as={Link} to="/admin/statistics" variant="outline-warning" className="me-2" style={{ borderRadius: "10px" }}>
-                📈 Thống kê nhanh
+                Báo cáo
               </Button>
               <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
                 Đến trang Nhân viên
@@ -265,12 +260,10 @@ export default function Admin() {
             )}
           </Tab>
 
-          {/* -------- Rooms -------- */}
           <Tab eventKey="rooms" title="Quản lý phòng">
             <RoomManagement />
           </Tab>
 
-          {/* -------- Employees -------- */}
           <Tab eventKey="employees" title={`Employees (${employees.length})`}>
             <Row className="mb-3">
               <Col md={6}>
@@ -317,7 +310,7 @@ export default function Admin() {
                         <td>{e.hireDate || "-"}</td>
                         <td><StatusBadge value={e.status} /></td>
                         <td className="text-nowrap">
-                          <Button size="sm" variant="outline-warning" className="me-2" onClick={() => handleDeleteEmployee(e.id)}> Deactivate </Button>
+                          <Button size="sm" variant="outline-warning" className="me-2" onClick={() => handleDeleteEmployee(e.id)}>Deactivate</Button>
                           <Button as={Link} to={`/admin/employees/${e.id}`} size="sm" variant="outline-secondary">Edit</Button>
                         </td>
                       </tr>
@@ -328,27 +321,22 @@ export default function Admin() {
             )}
           </Tab>
 
-          {/* -------- Services -------- */}
           <Tab eventKey="services" title="Quản lý dịch vụ">
             <ServicesManagement />
           </Tab>
 
-          {/* -------- Walk-in Booking -------- */}
           <Tab eventKey="walkin" title="Đặt phòng trực tiếp">
             <WalkInBooking />
           </Tab>
 
-          {/* -------- Cancel Requests -------- */}
           <Tab eventKey="cancels" title="Duyệt huỷ đặt phòng">
             <CancelRequestsTab />
           </Tab>
 
-          {/* -------- Staff Bookings -------- */}
           <Tab eventKey="staffBookings" title="Quản lý booking">
             <StaffBookings />
           </Tab>
 
-          {/* -------- Admin Schedule -------- */}
           <Tab eventKey="schedule" title="Lịch làm việc">
             <AdminSchedule />
           </Tab>

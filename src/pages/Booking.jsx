@@ -37,7 +37,8 @@ export default function Booking() {
   const [form, setForm] = useState({
     checkIn: addDays(1),
     checkOut: addDays(2),
-    guests: 1,
+    adults: 1,
+    children: 0,
     specialRequests: ''
   })
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
@@ -98,8 +99,13 @@ export default function Booking() {
   const validate = () => {
     if (!form.checkIn || !form.checkOut) return 'Vui lòng chọn ngày nhận/trả phòng'
     if (new Date(form.checkOut) <= new Date(form.checkIn)) return 'Ngày trả phòng phải sau ngày nhận phòng'
-    if (!form.guests || Number(form.guests) < 1) return 'Số khách không hợp lệ'
-    if (capacity && Number(form.guests) > capacity) return `Số khách tối đa: ${capacity}`
+    const adults = Number(form.adults) || 0
+    const children = Number(form.children) || 0
+    if (adults < 1) return 'Số người lớn phải ≥ 1'
+    if (children < 0) return 'Số trẻ em phải ≥ 0'
+    // Tính sức chứa: 2 trẻ em = 1 người lớn
+    const equivalentAdults = adults + Math.ceil(children / 2)
+    if (capacity && equivalentAdults > capacity) return `Số khách quy đổi (${equivalentAdults} người lớn) vượt quá sức chứa phòng (${capacity})`
     if (auth?.role && auth.role.toLowerCase() !== 'customer') return 'Chỉ tài khoản khách hàng mới được đặt phòng'
     if (!kyc.fullName) return 'Vui lòng nhập họ tên'
     if (!kyc.phoneNumber) return 'Vui lòng nhập số điện thoại'
@@ -117,7 +123,7 @@ export default function Booking() {
   const progress = useMemo(() => {
     let filled = 0
     if (form.checkIn && form.checkOut) filled += 20
-    if (form.guests >= 1) filled += 10
+    if (Number(form.adults) >= 1) filled += 10
     if (kyc.fullName) filled += 15
     if (kyc.phoneNumber) filled += 10
     if (kyc.nationalIdNumber) filled += 10
@@ -181,7 +187,8 @@ export default function Booking() {
     try {
       const payload = {
         roomId: Number(id),
-        guests: Number(form.guests),
+        adults: Number(form.adults),
+        children: Number(form.children) || 0,
         checkIn: form.checkIn,
         checkOut: form.checkOut,
         depositPercent,
@@ -351,21 +358,44 @@ export default function Booking() {
 
                     <Form.Group className="mt-3">
                       <Form.Label className="fw-semibold">Số khách</Form.Label>
-                      <Form.Select
-                        name="guests"
-                        value={form.guests}
-                        onChange={onChange}
-                        required
-                        style={{ borderRadius: '10px' }}
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                          <option key={num} value={num}>
-                            {num} khách
-                          </option>
-                        ))}
-                      </Form.Select>
+                      <Row className="g-2">
+                        <Col md={6}>
+                          <Form.Label className="small text-muted">Người lớn</Form.Label>
+                          <Form.Select
+                            name="adults"
+                            value={form.adults}
+                            onChange={onChange}
+                            required
+                            style={{ borderRadius: '10px' }}
+                          >
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                              <option key={num} value={num}>
+                                {num} {num === 1 ? 'người lớn' : 'người lớn'}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Label className="small text-muted">Trẻ em</Form.Label>
+                          <Form.Select
+                            name="children"
+                            value={form.children}
+                            onChange={onChange}
+                            required
+                            style={{ borderRadius: '10px' }}
+                          >
+                            {[0, 1, 2, 3, 4, 5, 6].map((num) => (
+                              <option key={num} value={num}>
+                                {num} {num === 0 ? 'trẻ em' : num === 1 ? 'trẻ em' : 'trẻ em'}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Col>
+                      </Row>
                       {capacity && (
-                        <div className="small text-muted mt-1">Sức chứa tối đa: {capacity} khách</div>
+                        <div className="small text-muted mt-2">
+                          Sức chứa tối đa: {capacity} khách (2 trẻ em = 1 người lớn)
+                        </div>
                       )}
                     </Form.Group>
 
