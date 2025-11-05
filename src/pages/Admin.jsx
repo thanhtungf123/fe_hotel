@@ -11,6 +11,7 @@ import RoomManagement from "../components/admin/RoomManagement";
 import ServicesManagement from "../components/admin/ServicesManagement";
 import WalkInBooking from "../components/admin/WalkInBooking";
 import CancelRequestsTab from "../components/admin/CancelRequestsTab";
+import StaffBookings from "../components/admin/StaffBookings";
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -424,6 +425,11 @@ export default function Admin() {
         {/* -------- Cancel Requests -------- */}
         <Tab eventKey="cancels" title="Duyệt huỷ đặt phòng">
           <CancelRequestsTab />
+        </Tab>
+
+        {/* -------- Staff Bookings Management -------- */}
+        <Tab eventKey="staffBookings" title="Quản lý booking">
+          <StaffBookings />
         </Tab>
         </Tabs>
       </Container>

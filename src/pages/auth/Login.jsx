@@ -4,6 +4,7 @@ import axios from "../../api/axiosInstance";
 import { useAuth } from "../../store/auth";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import "../../styles/auth.css";
+import { googleGetProfile, facebookGetProfile } from "../../utils/oauth";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -28,6 +29,25 @@ export default function Login() {
     } catch (e) {
       setErr(e?.response?.data?.message || e.message);
     } finally { setLoading(false); }
+  };
+
+  const oauthLogin = async (profilePromise) => {
+    setErr(""); setLoading(true);
+    try {
+      const profile = await profilePromise; // { provider, providerId, email, fullName, avatarUrl }
+      if (!profile?.email && profile?.provider === 'facebook') {
+        // Email có thể trống nếu user không cấp quyền
+        // Backend yêu cầu email, nên hiển thị hướng dẫn
+        throw new Error("Không lấy được email từ Facebook. Vui lòng cấp quyền email hoặc dùng Google.");
+      }
+      const { data } = await axios.post("/auth/oauth", profile);
+      login(data);
+      nav(next, { replace: true });
+    } catch (e) {
+      setErr(e?.response?.data?.message || e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,8 +93,12 @@ export default function Login() {
             <hr className="mt-4 mb-3" />
             <div className="text-center auth-muted">Hoặc tiếp tục với</div>
             <div className="auth-social">
-              <Button variant="light"><span className="me-2">🟢</span> Google</Button>
-              <Button variant="light"><span className="me-2">🔵</span> Facebook</Button>
+              <Button variant="light" onClick={() => oauthLogin(googleGetProfile())} disabled={loading}>
+                <span className="me-2">🟢</span> Google
+              </Button>
+              <Button variant="light" onClick={() => oauthLogin(facebookGetProfile())} disabled={loading}>
+                <span className="me-2">🔵</span> Facebook
+              </Button>
             </div>
           </Form>
         </Card.Body>

@@ -1,6 +1,111 @@
-# Getting Started with Create React App
+# Fe Hotel App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## OAuth (Google & Facebook)
+
+### Cách lấy Google Client ID:
+
+1. **Truy cập Google Cloud Console:**
+   - Vào: https://console.cloud.google.com/
+   - Đăng nhập bằng tài khoản Google của bạn
+
+2. **Tạo hoặc chọn Project:**
+   - Click dropdown "Select a project" ở đầu trang
+   - Chọn "New Project" nếu chưa có
+   - Đặt tên project (ví dụ: "Hotel OAuth") và click "Create"
+
+3. **Bật Google+ API:**
+   - Vào "APIs & Services" > "Library"
+   - Tìm "Google+ API" hoặc "Google Identity Services API"
+   - Click "Enable"
+
+4. **Tạo OAuth 2.0 Client ID:**
+   - Vào "APIs & Services" > "Credentials"
+   - Click "+ CREATE CREDENTIALS" > "OAuth client ID"
+   - Nếu chưa có OAuth consent screen, sẽ yêu cầu cấu hình:
+     - User Type: chọn "External" (cho development)
+     - App name: nhập tên app của bạn
+     - User support email: chọn email của bạn
+     - Developer contact: nhập email của bạn
+     - Click "Save and Continue" qua các bước (scopes có thể bỏ qua)
+   - Quay lại "Credentials" > "+ CREATE CREDENTIALS" > "OAuth client ID"
+   - Application type: chọn **"Web application"**
+   - Name: đặt tên (ví dụ: "Hotel Web Client")
+   - **Authorized JavaScript origins:**
+     ```
+     http://localhost:5173
+     http://127.0.0.1:5173
+     ```
+   - **Authorized redirect URIs:** (có thể để trống hoặc thêm):
+     ```
+     http://localhost:5173
+     ```
+   - Click "Create"
+
+5. **Copy Client ID:**
+   - Bạn sẽ thấy popup hiển thị "Your Client ID" (dạng: `123456789-abc...xyz.apps.googleusercontent.com`)
+   - Copy Client ID này và dùng trong file `.env.local`
+
+### Cách lấy Facebook App ID:
+
+1. **Truy cập Facebook Developers:**
+   - Vào: https://developers.facebook.com/
+   - Đăng nhập bằng tài khoản Facebook của bạn
+
+2. **Tạo App:**
+   - Click "My Apps" ở góc trên bên phải
+   - Chọn "Create App"
+   - Chọn loại app: "Consumer" hoặc "None" (tùy mục đích)
+   - Điền thông tin:
+     - App Display Name: tên app của bạn (ví dụ: "Hotel Booking")
+     - App Contact Email: email của bạn
+   - Click "Create App"
+
+3. **Thêm Facebook Login:**
+   - Trong dashboard của app, tìm "Add a Product"
+   - Tìm "Facebook Login" và click "Set Up"
+   - Chọn platform: **"Web"**
+   - Site URL: nhập `http://localhost:5173`
+   - Click "Save"
+
+4. **Cấu hình Facebook Login:**
+   - Vào "Settings" > "Basic" ở menu bên trái
+   - Ghi chú **App ID** và **App Secret** (App Secret không cần cho frontend)
+   - Thêm domain vào "App Domains": `localhost`
+   - Vào "Facebook Login" > "Settings" trong menu
+   - Thêm "Valid OAuth Redirect URIs":
+     ```
+     http://localhost:5173
+     http://127.0.0.1:5173
+     ```
+   - Click "Save Changes"
+
+5. **Copy App ID:**
+   - App ID nằm ở "Settings" > "Basic" (dạng số: `1234567890123456`)
+   - Copy App ID này và dùng trong file `.env.local`
+
+### Cấu hình file .env.local:
+
+Tạo file `.env.local` trong thư mục `fe_hotel` (cùng cấp với `package.json`):
+
+```env
+VITE_API_BASE=http://localhost:8080/api
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
+VITE_FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID_HERE
+```
+
+**Ví dụ:**
+```env
+VITE_API_BASE=http://localhost:8080/api
+VITE_GOOGLE_CLIENT_ID=123456789-abcdefghijklmnop.apps.googleusercontent.com
+VITE_FACEBOOK_APP_ID=1234567890123456
+```
+
+### Lưu ý quan trọng:
+
+- **Restart dev server** sau khi thêm/sửa file `.env.local`: dừng server (Ctrl+C) và chạy lại `npm run dev`
+- **Facebook:** Cần thêm email vào permissions (trong Facebook Login > Settings > Permissions, thêm `email`)
+- **Google:** Mặc định đã có quyền email trong scope `openid email profile`
+- **Production:** Khi deploy, cần cập nhật authorized origins/redirect URIs trong cả Google và Facebook với domain production của bạn
 
 ## Available Scripts
 
