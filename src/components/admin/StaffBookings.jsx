@@ -18,6 +18,12 @@ export default function StaffBookings(){
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailErr, setDetailErr] = useState("");
+  
+  // Confirmation modal state
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const load = async () => {
     setLoading(true); setErr("");
@@ -146,6 +152,7 @@ export default function StaffBookings(){
           {detailLoading && (<div className="py-3 text-center"><Spinner animation="border" /></div>)}
           {detailErr && (<Alert variant="danger">{detailErr}</Alert>)}
           {detail && (
+            <>
             <Row className="g-3">
               <Col md={6}>
                 <Card className="h-100">
@@ -155,7 +162,7 @@ export default function StaffBookings(){
                     <div className="mb-2"><strong>Tổng tiền:</strong> {fmtVnd(detail.totalPrice)}</div>
                     <div className="mb-2"><strong>Thanh toán:</strong> <PayState v={detail.paymentState} /></div>
                     <div className="mb-2"><strong>Trạng thái:</strong> <Status s={detail.status} /></div>
-                    <div className="mb-2"><strong>Mã check-in:</strong> <code>{detail.checkInCode || "—"}</code></div>
+                    <div className="mb-2"><strong>Mã check-in:</strong> <code className="fs-5 fw-bold text-primary">{detail.checkInCode || "—"}</code></div>
                   </Card.Body>
                 </Card>
               </Col>
@@ -178,8 +185,171 @@ export default function StaffBookings(){
                 </Card>
               </Col>
             </Row>
+            <div className="mt-3 d-flex gap-2">
+              {detail.status === "confirmed" && (() => {
+                const checkInDate = detail.checkIn ? new Date(detail.checkIn + 'T00:00:00') : null;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const canCheckIn = checkInDate && checkInDate <= today;
+                
+                return (
+                  <Button 
+                    variant="success" 
+                    onClick={() => {
+                      setConfirmAction({
+                        title: "Xác nhận Check-in",
+                        message: (
+                          <>
+                            <p className="mb-2">Bạn có chắc chắn muốn check-in cho booking <strong>#{detailId}</strong>?</p>
+                            <div className="small text-muted">
+                              <div><strong>Khách hàng:</strong> {detail.customer?.fullName || "—"}</div>
+                              <div><strong>Phòng:</strong> {detail.roomName || "—"}</div>
+                              <div><strong>Mã check-in:</strong> <code>{detail.checkInCode || "—"}</code></div>
+                            </div>
+                          </>
+                        ),
+                        confirmLabel: "Xác nhận Check-in",
+                        confirmVariant: "success",
+                        onConfirm: async () => {
+                          setActionLoading(true);
+                          setActionError("");
+                          try {
+                            await axios.post(`/staff/bookings/${detailId}/check-in`);
+                            setDetailId(null);
+                            setShowConfirm(false);
+                            load();
+                          } catch(e) {
+                            setActionError(e?.response?.data?.message || e.message || "Lỗi khi check-in");
+                          } finally {
+                            setActionLoading(false);
+                          }
+                        }
+                      });
+                      setShowConfirm(true);
+                    }}
+                    disabled={!canCheckIn}
+                    title={!canCheckIn && checkInDate ? `Chỉ có thể check-in từ ngày ${detail.checkIn}` : ""}
+                  >
+                    ✓ Check-in {!canCheckIn && checkInDate ? `(từ ${detail.checkIn})` : ""}
+                  </Button>
+                );
+              })()}
+              {detail.status === "checked_in" && (
+                <Button 
+                  variant="warning" 
+                  onClick={() => {
+                    setConfirmAction({
+                      title: "Xác nhận Check-out",
+                      message: (
+                        <>
+                          <p className="mb-2">Bạn có chắc chắn muốn check-out cho booking <strong>#{detailId}</strong>?</p>
+                          <div className="small text-muted">
+                            <div><strong>Khách hàng:</strong> {detail.customer?.fullName || "—"}</div>
+                            <div><strong>Phòng:</strong> {detail.roomName || "—"}</div>
+                          </div>
+                        </>
+                      ),
+                      confirmLabel: "Xác nhận Check-out",
+                      confirmVariant: "warning",
+                      onConfirm: async () => {
+                        setActionLoading(true);
+                        setActionError("");
+                        try {
+                          await axios.post(`/staff/bookings/${detailId}/check-out`);
+                          setDetailId(null);
+                          setShowConfirm(false);
+                          load();
+                        } catch(e) {
+                          setActionError(e?.response?.data?.message || e.message || "Lỗi khi check-out");
+                        } finally {
+                          setActionLoading(false);
+                        }
+                      }
+                    });
+                    setShowConfirm(true);
+                  }}
+                >
+                  🚪 Check-out
+                </Button>
+              )}
+            </div>
+            </>
           )}
         </Modal.Body>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
+        show={showConfirm}
+        onHide={() => {
+          if (!actionLoading) {
+            setShowConfirm(false);
+            setConfirmAction(null);
+            setActionError("");
+          }
+        }}
+        centered
+        backdrop={actionLoading ? "static" : true}
+      >
+        <Modal.Header closeButton={!actionLoading} style={{ borderBottom: "2px solid var(--primary-gold, #C9A24A)" }}>
+          <Modal.Title style={{ fontFamily: "Playfair Display, serif", fontWeight: "600" }}>
+            {confirmAction?.title || "Xác nhận"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {actionError && (
+            <Alert variant="danger" className="mb-3 py-2">
+              {actionError}
+            </Alert>
+          )}
+          {typeof confirmAction?.message === "string" ? (
+            <p className="mb-0">{confirmAction.message}</p>
+          ) : (
+            confirmAction?.message
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            onClick={() => {
+              setShowConfirm(false);
+              setConfirmAction(null);
+              setActionError("");
+            }}
+            disabled={actionLoading}
+            style={{ borderRadius: "8px" }}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant={confirmAction?.confirmVariant || "primary"}
+            onClick={() => {
+              confirmAction?.onConfirm?.();
+            }}
+            disabled={actionLoading}
+            style={{ 
+              borderRadius: "8px",
+              ...(confirmAction?.confirmVariant === "success" && {
+                background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
+                border: "none"
+              }),
+              ...(confirmAction?.confirmVariant === "warning" && {
+                background: "linear-gradient(135deg, #ffc107 0%, #ff9800 100%)",
+                border: "none",
+                color: "#000"
+              })
+            }}
+          >
+            {actionLoading ? (
+              <>
+                <Spinner as="span" size="sm" animation="border" className="me-2" />
+                Đang xử lý...
+              </>
+            ) : (
+              confirmAction?.confirmLabel || "Xác nhận"
+            )}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

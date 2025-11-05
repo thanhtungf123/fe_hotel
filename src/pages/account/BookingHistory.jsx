@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, Row, Col, Badge, Button, Form, Pagination, Alert } from "react-bootstrap";
+import { Card, Row, Col, Badge, Button, Form, Pagination, Alert, Modal } from "react-bootstrap";
 import axios from "../../api/axiosInstance";
 import { useAuth } from "../../store/auth";
 import { Link, useNavigate } from "react-router-dom";
@@ -29,6 +29,12 @@ export default function BookingHistory() {
 
   // review modal state
   const [reviewTarget, setReviewTarget] = useState(null);
+
+  // refund info modal state
+  const [refundTarget, setRefundTarget] = useState(null);
+  const [refundForm, setRefundForm] = useState({ accountHolder: "", accountNumber: "", bankName: "" });
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refundErr, setRefundErr] = useState("");
 
 
   // nếu chưa login -> điều hướng
@@ -112,6 +118,28 @@ export default function BookingHistory() {
     }
   };
 
+  const submitRefundInfo = async (e) => {
+    e.preventDefault();
+    if (!refundTarget) return;
+    setRefundLoading(true);
+    setRefundErr("");
+
+    try {
+      await axios.post(`/bookings/${refundTarget.id}/refund-info`, {
+        accountHolder: refundForm.accountHolder.trim(),
+        accountNumber: refundForm.accountNumber.trim(),
+        bankName: refundForm.bankName.trim()
+      });
+      setRefundTarget(null);
+      setRefundForm({ accountHolder: "", accountNumber: "", bankName: "" });
+      await load();
+    } catch (e) {
+      setRefundErr(e?.response?.data?.message || e.message || "Gửi thông tin hoàn tiền thất bại");
+    } finally {
+      setRefundLoading(false);
+    }
+  };
+
   return (
     <main className="py-4">
       <div className="container account-wrap">
@@ -158,9 +186,24 @@ export default function BookingHistory() {
                         {/* NEW: Payment info */}
                         <div className="small mt-1">
                           Thanh toán: <b>{(b.paymentState||'unpaid').replaceAll('_',' ')}</b>
-                          {Number(b.amountPaid||0)>0 && <> &nbsp;• Đã trả: <b>{fmtVnd(b.amountPaid)}</b></>}
-                          {Number(b.amountRemaining||0)>0 && <> &nbsp;• Còn lại: <b className="text-danger">{fmtVnd(b.amountRemaining)}</b></>}
+                          {/* ✅ Chỉ hiển thị "Đã trả" và "Còn lại" khi chưa thanh toán đủ */}
+                          {String(b.paymentState).toLowerCase() !== 'paid_in_full' && (
+                            <>
+                              {Number(b.amountPaid||0)>0 && <> &nbsp;• Đã trả: <b>{fmtVnd(b.amountPaid)}</b></>}
+                              {Number(b.amountRemaining||0)>0 && <> &nbsp;• Còn lại: <b className="text-danger">{fmtVnd(b.amountRemaining)}</b></>}
+                            </>
+                          )}
                         </div>
+                        {/* NEW: Check-in code */}
+                        {b.checkInCode && b.checkInCode.trim() !== "" ? (
+                          <div className="small mt-1">
+                            🔑 Mã check-in: <code className="fw-bold text-primary">{b.checkInCode}</code>
+                          </div>
+                        ) : (b.status === "confirmed" && (b.paymentState === "deposit_paid" || b.paymentState === "paid_in_full")) ? (
+                          <div className="small mt-1 text-warning">
+                            ⏳ Mã check-in đang được tạo...
+                          </div>
+                        ) : null}
                       </div>
                       <div className="text-end">
                         {badge(b.status)}
@@ -180,8 +223,37 @@ export default function BookingHistory() {
                           </Button>
                         )}
 
-                        {/* NEW: Thanh toán phần còn lại */}
-                        {String(b.status).toLowerCase()==='confirmed' && Number(b.amountRemaining)>0 && (
+                        {/* ✅ NEW: Gửi thông tin hoàn tiền - Chỉ hiển thị khi cancelled và chưa gửi */}
+                        {String(b.status).toLowerCase() === 'cancelled' && 
+                         !b.refundSubmitted && 
+                         !b.refundCompleted && (
+                          <Button 
+                            variant="outline-primary" 
+                            onClick={() => {
+                              setRefundTarget(b);
+                              setRefundForm({ accountHolder: "", accountNumber: "", bankName: "" });
+                              setRefundErr("");
+                            }}
+                          >
+                            💳 Gửi thông tin hoàn tiền
+                          </Button>
+                        )}
+
+                        {/* ✅ Hiển thị trạng thái hoàn tiền */}
+                        {String(b.status).toLowerCase() === 'cancelled' && b.refundSubmitted && (
+                          <div className="small text-muted">
+                            {b.refundCompleted ? (
+                              <Badge bg="success">✅ Đã hoàn tiền</Badge>
+                            ) : (
+                              <Badge bg="warning">⏳ Đang chờ hoàn tiền</Badge>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ✅ NEW: Thanh toán phần còn lại - Chỉ hiển thị khi deposit_paid và còn nợ */}
+                        {String(b.status).toLowerCase()==='confirmed' && 
+                         String(b.paymentState).toLowerCase()==='deposit_paid' && 
+                         Number(b.amountRemaining)>0 && (
                           <div style={{minWidth: 240}}>
                             <PaymentButton
                               bookingId={b.id}
@@ -247,6 +319,78 @@ export default function BookingHistory() {
           roomId={reviewTarget?.roomId}
           onSuccess={load}
         />
+
+        {/* Refund Info Modal */}
+        <Modal show={!!refundTarget} onHide={() => {
+          if (!refundLoading) {
+            setRefundTarget(null);
+            setRefundForm({ accountHolder: "", accountNumber: "", bankName: "" });
+            setRefundErr("");
+          }
+        }} centered>
+          <Form onSubmit={submitRefundInfo}>
+            <Modal.Header closeButton={!refundLoading}>
+              <Modal.Title>💳 Gửi thông tin hoàn tiền</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {refundErr && <Alert variant="danger" className="py-2">{refundErr}</Alert>}
+              <div className="small text-muted mb-3">
+                Đơn đặt phòng #{refundTarget?.id} - {refundTarget?.roomName}
+                <br />
+                Vui lòng điền đầy đủ thông tin tài khoản ngân hàng để chúng tôi có thể hoàn tiền cho bạn.
+              </div>
+              <Form.Group className="mb-3">
+                <Form.Label>Chủ tài khoản ngân hàng <span className="text-danger">*</span></Form.Label>
+                <Form.Control
+                  type="text"
+                  value={refundForm.accountHolder}
+                  onChange={(e) => setRefundForm({ ...refundForm, accountHolder: e.target.value })}
+                  placeholder="Nhập tên chủ tài khoản"
+                  required
+                  disabled={refundLoading}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Số tài khoản ngân hàng <span className="text-danger">*</span></Form.Label>
+                <Form.Control
+                  type="text"
+                  value={refundForm.accountNumber}
+                  onChange={(e) => setRefundForm({ ...refundForm, accountNumber: e.target.value })}
+                  placeholder="Nhập số tài khoản"
+                  required
+                  disabled={refundLoading}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Tên ngân hàng <span className="text-danger">*</span></Form.Label>
+                <Form.Control
+                  type="text"
+                  value={refundForm.bankName}
+                  onChange={(e) => setRefundForm({ ...refundForm, bankName: e.target.value })}
+                  placeholder="VD: Vietcombank, BIDV, Techcombank..."
+                  required
+                  disabled={refundLoading}
+                />
+              </Form.Group>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="outline-secondary"
+                onClick={() => {
+                  setRefundTarget(null);
+                  setRefundForm({ accountHolder: "", accountNumber: "", bankName: "" });
+                  setRefundErr("");
+                }}
+                disabled={refundLoading}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" variant="primary" disabled={refundLoading}>
+                {refundLoading ? "Đang gửi..." : "Gửi thông tin"}
+              </Button>
+            </Modal.Footer>
+          </Form>
+        </Modal>
       </div>
     </main>
   );
