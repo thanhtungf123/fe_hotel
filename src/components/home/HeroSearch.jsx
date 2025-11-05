@@ -61,8 +61,8 @@ export default function HeroSearch() {
                     lineHeight: '1.2'
                   }}
                 >
-                  Trải nghiệm nghỉ dưỡng <br />
-                  <span style={{ color: '#FFD700' }}>đẳng cấp quốc tế</span>
+                  <span style={{ color: '#FFD700' }}>Trải nghiệm nghỉ dưỡng<br />
+                                          đẳng cấp quốc tế</span>
                 </h1>
               </motion.div>
 
