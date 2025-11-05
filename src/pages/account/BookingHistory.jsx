@@ -5,6 +5,7 @@ import { useAuth } from "../../store/auth";
 import { Link, useNavigate } from "react-router-dom";
 import CancelModal from "./CancelModal";
 import PaymentButton from "../../components/PaymentButton";
+import ReviewModal from "../../components/review/ReviewModal";
 import "../../styles/account.css";
 
 const fmtVnd = (n) => (Number(n) || 0).toLocaleString("vi-VN") + "₫";
@@ -25,6 +26,9 @@ export default function BookingHistory() {
   const [target, setTarget] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelErr, setCancelErr] = useState("");
+
+  // review modal state
+  const [reviewTarget, setReviewTarget] = useState(null);
 
 
   // nếu chưa login -> điều hướng
@@ -187,6 +191,17 @@ export default function BookingHistory() {
                             />
                           </div>
                         )}
+
+                        {/* NEW: Viết đánh giá */}
+                        {(String(b.status).toLowerCase() === 'checked_out' || 
+                          String(b.status).toLowerCase() === 'completed') && (
+                          <Button 
+                            variant="outline-primary" 
+                            onClick={() => setReviewTarget(b)}
+                          >
+                            ⭐ Viết đánh giá
+                          </Button>
+                        )}
                       </div>
 
                   </div>
@@ -223,6 +238,14 @@ export default function BookingHistory() {
           onSubmit={submitCancel}
           loading={cancelLoading}
           error={cancelErr}
+        />
+
+        <ReviewModal
+          show={!!reviewTarget}
+          onHide={() => setReviewTarget(null)}
+          bookingId={reviewTarget?.id}
+          roomId={reviewTarget?.roomId}
+          onSuccess={load}
         />
       </div>
     </main>

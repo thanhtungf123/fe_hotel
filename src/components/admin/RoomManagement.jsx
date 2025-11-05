@@ -192,12 +192,12 @@ export default function RoomManagement() {
             await axios.patch(`/rooms/${room.id}/visibility`, {
               isVisible: false
             });
-            showToast.info(`🔒 Phòng "${room.name}" đã được tự động ẩn`);
+            showToast.info(` Phòng "${room.name}" đã được tự động ẩn`);
           } else if (willAutoShow && !room.isVisible) {
             await axios.patch(`/rooms/${room.id}/visibility`, {
               isVisible: true
             });
-            showToast.info(`👁️ Phòng "${room.name}" đã được tự động hiện`);
+            showToast.info(` Phòng "${room.name}" đã được tự động hiện`);
           }
 
           await loadRooms();
@@ -230,9 +230,9 @@ export default function RoomManagement() {
       maintenance: "danger"
     };
     const labels = {
-      available: "✅ Có sẵn",
-      occupied: "🔒 Đang dùng",
-      maintenance: "🔧 Bảo trì"
+      available: " Có sẵn",
+      occupied: " Đang dùng",
+      maintenance: " Bảo trì"
     };
     return (
       <Badge bg={variants[status] || "secondary"}>
@@ -368,9 +368,9 @@ export default function RoomManagement() {
                             cursor: "pointer"
                           }}
                         >
-                          <option value="available">✅ Có sẵn</option>
-                          <option value="occupied">🔒 Đang dùng</option>
-                          <option value="maintenance">🔧 Bảo trì</option>
+                          <option value="available">Có sẵn</option>
+                          <option value="occupied">Đang dùng</option>
+                          <option value="maintenance">Bảo trì</option>
                         </Form.Select>
                       </td>
                       <td className="text-center">
@@ -385,7 +385,7 @@ export default function RoomManagement() {
                           className="d-inline-flex gap-2"
                           whileHover={{ scale: 1.05 }}
                         >
-                          <Button
+                          {/* <Button
                             size="sm"
                             variant={room.isVisible !== false ? "outline-warning" : "outline-success"}
                             onClick={() => handleToggleVisibility(room)}
@@ -393,14 +393,14 @@ export default function RoomManagement() {
                             style={{ borderRadius: "8px" }}
                           >
                             {room.isVisible !== false ? "👁️ Ẩn" : "👁️‍🗨️ Hiện"}
-                          </Button>
+                          </Button> */}
                           <Button
                             size="sm"
                             variant="outline-primary"
                             onClick={() => handleEdit(room)}
                             style={{ borderRadius: "8px" }}
                           >
-                            ✏️ Sửa
+                            Sửa
                           </Button>
                           <Button
                             size="sm"
@@ -408,7 +408,7 @@ export default function RoomManagement() {
                             onClick={() => handleDelete(room)}
                             style={{ borderRadius: "8px" }}
                           >
-                            🗑️ Xóa
+                            Xóa
                           </Button>
                         </motion.div>
                       </td>
