@@ -206,6 +206,19 @@ export default function BookingHistory() {
                             ⏳ Mã check-in đang được tạo...
                           </div>
                         ) : null}
+                        {/* ✅ Services */}
+                        {b.services && Array.isArray(b.services) && b.services.length > 0 && (
+                          <div className="mt-2">
+                            <div className="small fw-semibold mb-1">✨ Dịch vụ đã chọn:</div>
+                            <div className="d-flex flex-wrap gap-1">
+                              {b.services.map((svc, idx) => (
+                                <Badge key={idx} bg="info" className="text-dark">
+                                  {svc.name || svc.nameService} (+{fmtVnd(svc.price || 0)})
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="text-end">
                         {badge(b.status)}

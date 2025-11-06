@@ -45,6 +45,7 @@ export default function Admin() {
   };
 
   const roleName = getRoleName();
+  const isAdmin = roleName === "admin";
 
   useEffect(() => {
     let alive = true;
@@ -63,6 +64,11 @@ export default function Admin() {
     };
 
     const loadEmployees = async () => {
+      // Only load employees if user is admin
+      if (!isAdmin) {
+        if (alive) setLoading((s) => ({ ...s, employees: false }));
+        return;
+      }
       try {
         const { data } = await axios.get("/admin/employees");
         if (!alive) return;
@@ -79,7 +85,7 @@ export default function Admin() {
     loadEmployees();
 
     return () => { alive = false; };
-  }, []);
+  }, [isAdmin]);
 
   const norm = (v) => (v ?? "").toString().toLowerCase();
 
@@ -112,7 +118,8 @@ export default function Admin() {
   }, [employees, qEmp]);
 
   if (!user?.token) return <Navigate to="/login" replace />;
-  if (roleName !== "admin") return <Navigate to="/" replace />;
+  // Allow both admin and staff to access
+  if (roleName !== "admin" && roleName !== "staff") return <Navigate to="/" replace />;
 
   const handleDeleteAccount = async (id) => {
     if (!window.confirm("Are you sure you want to delete this account?")) return;
@@ -186,17 +193,23 @@ export default function Admin() {
                   color: "var(--primary-dark)"
                 }}
               >
-                🏨 Admin Dashboard
+                🏨 {isAdmin ? "Admin Dashboard" : "Staff Dashboard"}
               </h2>
-              <div className="text-muted">Quản lý Khách hàng, Nhân viên & Phòng</div>
+              <div className="text-muted">
+                {isAdmin ? "Quản lý Khách hàng, Nhân viên & Phòng" : "Quản lý Khách hàng & Phòng"}
+              </div>
             </Col>
             <Col className="text-end">
-              <Button as={Link} to="/admin/reports" variant="warning" className="me-2" style={{ borderRadius: "10px" }}>
-                Báo cáo
-              </Button>
-              <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
-                Đến trang Nhân viên
-              </Button>
+              {isAdmin && (
+                <>
+                  <Button as={Link} to="/admin/reports" variant="warning" className="me-2" style={{ borderRadius: "10px" }}>
+                    Báo cáo
+                  </Button>
+                  <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
+                    Đến trang Nhân viên
+                  </Button>
+                </>
+              )}
               <Button as={Link} to="/" style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)", border: "none", borderRadius: "10px" }}>
                 Về trang chủ
               </Button>
@@ -264,62 +277,64 @@ export default function Admin() {
             <RoomManagement />
           </Tab>
 
-          <Tab eventKey="employees" title={`Employees (${employees.length})`}>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Control placeholder="Search by name, email, phone, position, department, status..." value={qEmp} onChange={(e) => setQEmp(e.target.value)} />
-              </Col>
-              <Col className="text-end">
-                <Button as={Link} to="/admin/employee/create" variant="primary">+ Create Employee</Button>
-              </Col>
-            </Row>
+          {isAdmin && (
+            <Tab eventKey="employees" title={`Employees (${employees.length})`}>
+              <Row className="mb-3">
+                <Col md={6}>
+                  <Form.Control placeholder="Search by name, email, phone, position, department, status..." value={qEmp} onChange={(e) => setQEmp(e.target.value)} />
+                </Col>
+                <Col className="text-end">
+                  <Button as={Link} to="/admin/employee/create" variant="primary">+ Create Employee</Button>
+                </Col>
+              </Row>
 
-            {loading.employees ? (
-              <GridSkeleton cols={1} rows={1} />
-            ) : error.employees ? (
-              <Alert variant="danger">Failed to load employees: {error.employees}</Alert>
-            ) : (
-              <div className="table-responsive">
-                <Table hover bordered size="sm" className="align-middle">
-                  <thead className="table-light">
-                    <tr>
-                      <th style={{ width: 80 }}>ID</th>
-                      <th>Employee ID</th>
-                      <th>Email</th>
-                      <th>Phone</th>
-                      <th>Position</th>
-                      <th>Department</th>
-                      <th>Salary</th>
-                      <th>Hire Date</th>
-                      <th>Status</th>
-                      <th style={{ width: 120 }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEmployees.length === 0 ? (
-                      <tr><td colSpan={9} className="text-center text-muted py-4">No employees found</td></tr>
-                    ) : filteredEmployees.map((e) => (
-                      <tr key={e.id}>
-                        <td>{e.id}</td>
-                        <td>{e.employeeCode || e.fullName || "-"}</td>
-                        <td>{e.account?.email || "-"}</td>
-                        <td>{e.account?.phone || "-"}</td>
-                        <td>{e.position || "-"}</td>
-                        <td>{e.department || "-"}</td>
-                        <td>{e.salary || "-"}</td>
-                        <td>{e.hireDate || "-"}</td>
-                        <td><StatusBadge value={e.status} /></td>
-                        <td className="text-nowrap">
-                          <Button size="sm" variant="outline-warning" className="me-2" onClick={() => handleDeleteEmployee(e.id)}>Deactivate</Button>
-                          <Button as={Link} to={`/admin/employees/${e.id}`} size="sm" variant="outline-secondary">Edit</Button>
-                        </td>
+              {loading.employees ? (
+                <GridSkeleton cols={1} rows={1} />
+              ) : error.employees ? (
+                <Alert variant="danger">Failed to load employees: {error.employees}</Alert>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover bordered size="sm" className="align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: 80 }}>ID</th>
+                        <th>Employee ID</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Position</th>
+                        <th>Department</th>
+                        <th>Salary</th>
+                        <th>Hire Date</th>
+                        <th>Status</th>
+                        <th style={{ width: 120 }}>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            )}
-          </Tab>
+                    </thead>
+                    <tbody>
+                      {filteredEmployees.length === 0 ? (
+                        <tr><td colSpan={9} className="text-center text-muted py-4">No employees found</td></tr>
+                      ) : filteredEmployees.map((e) => (
+                        <tr key={e.id}>
+                          <td>{e.id}</td>
+                          <td>{e.employeeCode || e.fullName || "-"}</td>
+                          <td>{e.account?.email || "-"}</td>
+                          <td>{e.account?.phone || "-"}</td>
+                          <td>{e.position || "-"}</td>
+                          <td>{e.department || "-"}</td>
+                          <td>{e.salary || "-"}</td>
+                          <td>{e.hireDate || "-"}</td>
+                          <td><StatusBadge value={e.status} /></td>
+                          <td className="text-nowrap">
+                            <Button size="sm" variant="outline-warning" className="me-2" onClick={() => handleDeleteEmployee(e.id)}>Deactivate</Button>
+                            <Button as={Link} to={`/admin/employees/${e.id}`} size="sm" variant="outline-secondary">Edit</Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Tab>
+          )}
 
           <Tab eventKey="services" title="Quản lý dịch vụ">
             <ServicesManagement />

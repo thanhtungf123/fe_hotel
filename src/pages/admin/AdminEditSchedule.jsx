@@ -10,9 +10,10 @@ import {
   Alert,
 } from "react-bootstrap";
 // Giờ chúng ta cần useParams để lấy ID từ URL
-import { Link, useNavigate, useParams } from "react-router-dom"; 
+import { Link, useNavigate, useParams, Navigate } from "react-router-dom"; 
 // SỬA LỖI: Lỗi không tìm thấy file, tạm thời đổi về 'axios' gốc
 import axios from "../../api/axiosInstance"; 
+import { useAuth } from "../../store/auth";
 // SỬA LỖI: Lỗi không tìm thấy thư viện icon
 // import { ArrowLeft } from "react-bootstrap-icons";
 
@@ -28,8 +29,33 @@ const initialState = {
 };
 
 export default function AdminEditSchedule() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { shiftId } = useParams(); // Lấy ID từ URL, ví dụ: /admin/schedules/1
+  
+  // Check role - only admin can edit schedules
+  const getRoleName = () => {
+    let rn =
+      (typeof user?.role === "string" ? user.role : undefined) ??
+      user?.role?.name ??
+      user?.role?.role_name;
+
+    if (!rn) {
+      try {
+        const raw = sessionStorage.getItem("auth") || localStorage.getItem("auth");
+        const auth = raw ? JSON.parse(raw) : undefined;
+        rn =
+          (typeof auth?.role === "string" ? auth.role : undefined) ??
+          auth?.role?.name ??
+          auth?.role?.role_name;
+      } catch { }
+    }
+    return typeof rn === "string" ? rn.toLowerCase() : undefined;
+  };
+
+  const roleName = getRoleName();
+  if (!user?.token) return <Navigate to="/login" replace />;
+  if (roleName !== "admin") return <Navigate to="/admin" replace />;
   
   const [formData, setFormData] = useState(initialState);
   const [employees, setEmployees] = useState([]);
