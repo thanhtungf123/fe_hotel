@@ -51,11 +51,11 @@ export default function Employee() {
         //   GET /accounts?role=customer
         let res;
         try {
-          res = await axios.get("/admin/accounts", { params: { role: "customer" } });
+          res = await axios.get("/admin/employees/accounts", { params: { role: "customer" } });
         } catch (e) {
           const code = e?.response?.status;
           if (code === 404 || code === 405) {
-            res = await axios.get("/accounts", { params: { role: "customer" } });
+            res = await axios.get("/employees/accounts", { params: { role: "customer" } });
           } else {
             throw e;
           }
