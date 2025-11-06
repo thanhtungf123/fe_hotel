@@ -7,8 +7,7 @@ import { Link, Navigate } from "react-router-dom";
 // SỬA LỖI: Không tìm thấy module, thay bằng axios gốc
 import axios from "../../api/axiosInstance";
 import { Trash } from "react-bootstrap-icons";
-// SỬA LỖI: Không tìm thấy module, tạm thời comment out
-// import { useAuth } from "../../store/auth";
+import { useAuth } from "../../store/auth";
 
 // 1. Hàm helper để định dạng ngày giờ
 /**
@@ -48,9 +47,7 @@ const formatDateTime = (isoString) => {
 
 
 export default function AdminSchedules() {
-  // SỬA LỖI: Tạm thời comment out do lỗi import
-  // const { user } = useAuth();
-  const user = {}; // Cung cấp một object rỗng tạm thời
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -66,7 +63,27 @@ export default function AdminSchedules() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // ---- Check role ----
-  // ... (có thể thêm vô hoặc không) ...
+  const getRoleName = () => {
+    let rn =
+      (typeof user?.role === "string" ? user.role : undefined) ??
+      user?.role?.name ??
+      user?.role?.role_name;
+
+    if (!rn) {
+      try {
+        const raw = sessionStorage.getItem("auth") || localStorage.getItem("auth");
+        const auth = raw ? JSON.parse(raw) : undefined;
+        rn =
+          (typeof auth?.role === "string" ? auth.role : undefined) ??
+          auth?.role?.name ??
+          auth?.role?.role_name;
+      } catch { }
+    }
+    return typeof rn === "string" ? rn.toLowerCase() : undefined;
+  };
+
+  const roleName = getRoleName();
+  const isAdmin = roleName === "admin";
 
   // ---- Load work shifts ----
   useEffect(() => {
@@ -203,10 +220,11 @@ export default function AdminSchedules() {
               <Button as={Link} to="/admin" variant="outline-secondary" className="me-2">
                 Back to Admin
               </Button>
-              <Button as={Link} to="/admin/schedules/create" variant="primary">
-                + Assign Shift
-              </Button>
-              
+              {isAdmin && (
+                <Button as={Link} to="/admin/schedules/create" variant="primary">
+                  + Assign Shift
+                </Button>
+              )}
             </Col>
           </Row>
         </Card.Header>
@@ -310,21 +328,24 @@ export default function AdminSchedules() {
                         </td>
                         
                         <td className="text-nowrap">
-                          <Button as={Link} to={`/admin/schedules/${s.id}`} size="sm" variant="outline-primary" className="me-2" title="Edit">
-                            {/* <PencilSquare /> */}
-                            Edit
-                          </Button>
-                          <Button 
-                              size="sm" 
-                              variant="outline-danger" 
-                              title="Delete"
-                              onClick={() => handleDeleteClick(s.id)}
-                              disabled={isDeleting && deletingId === s.id} // Vô hiệu hóa chỉ nút đang xóa
-                            >
-                              {/* <Trash /> */}
-                              
-                              {isDeleting && deletingId === s.id ? "..." : "Delete"}
-                            </Button>
+                          {isAdmin ? (
+                            <>
+                              <Button as={Link} to={`/admin/schedules/${s.id}`} size="sm" variant="outline-primary" className="me-2" title="Edit">
+                                Edit
+                              </Button>
+                              <Button 
+                                  size="sm" 
+                                  variant="outline-danger" 
+                                  title="Delete"
+                                  onClick={() => handleDeleteClick(s.id)}
+                                  disabled={isDeleting && deletingId === s.id}
+                                >
+                                  {isDeleting && deletingId === s.id ? "..." : "Delete"}
+                                </Button>
+                            </>
+                          ) : (
+                            <span className="text-muted">View only</span>
+                          )}
                         </td>
                       </tr>
                     );

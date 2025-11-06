@@ -25,7 +25,15 @@ export default function Login() {
       const { data } = await axios.post("/auth/login", form);
       // data: {token, accountId, fullName, role}
       login(data);
-      nav(next, { replace: true });
+      
+      // Redirect admin/staff to admin dashboard
+      const role = typeof data.role === "string" ? data.role.toLowerCase() : 
+                   (data.role?.name || data.role?.role_name || "").toLowerCase();
+      if (role === "admin" || role === "staff") {
+        nav("/admin", { replace: true });
+      } else {
+        nav(next, { replace: true });
+      }
     } catch (e) {
       setErr(e?.response?.data?.message || e.message);
     } finally { setLoading(false); }
@@ -42,7 +50,15 @@ export default function Login() {
       }
       const { data } = await axios.post("/auth/oauth", profile);
       login(data);
-      nav(next, { replace: true });
+      
+      // Redirect admin/staff to admin dashboard
+      const role = typeof data.role === "string" ? data.role.toLowerCase() : 
+                   (data.role?.name || data.role?.role_name || "").toLowerCase();
+      if (role === "admin" || role === "staff") {
+        nav("/admin", { replace: true });
+      } else {
+        nav(next, { replace: true });
+      }
     } catch (e) {
       setErr(e?.response?.data?.message || e.message);
     } finally {

@@ -120,6 +120,7 @@ export default function StaffBookings(){
                 <th>Thanh toán</th>
                 <th>Trạng thái</th>
                 <th>Mã check-in</th>
+                <th>Dịch vụ</th>
                 <th></th>
               </tr>
             </thead>
@@ -134,6 +135,13 @@ export default function StaffBookings(){
                   <td><PayState v={b.paymentState} /></td>
                   <td><Status s={b.status} /></td>
                   <td><code>{b.checkInCode || "—"}</code></td>
+                  <td>
+                    {b.services && Array.isArray(b.services) && b.services.length > 0 && (
+                      <div className="small text-muted">
+                        ✨ {b.services.length} dịch vụ
+                      </div>
+                    )}
+                  </td>
                   <td className="text-end">
                     <Button size="sm" variant="outline-primary" onClick={()=>setDetailId(b.id)}>Chi tiết</Button>
                   </td>
@@ -163,6 +171,25 @@ export default function StaffBookings(){
                     <div className="mb-2"><strong>Thanh toán:</strong> <PayState v={detail.paymentState} /></div>
                     <div className="mb-2"><strong>Trạng thái:</strong> <Status s={detail.status} /></div>
                     <div className="mb-2"><strong>Mã check-in:</strong> <code className="fs-5 fw-bold text-primary">{detail.checkInCode || "—"}</code></div>
+                    {/* ✅ Services */}
+                    {detail.services && Array.isArray(detail.services) && detail.services.length > 0 && (
+                      <div className="mt-3">
+                        <div className="mb-2"><strong>Dịch vụ đã chọn:</strong></div>
+                        <div className="d-flex flex-column gap-2">
+                          {detail.services.map((svc, idx) => (
+                            <div key={idx} className="p-2 bg-light rounded">
+                              <div className="fw-semibold">{svc.name || svc.nameService || "Dịch vụ"}</div>
+                              {/* {svc.description && (
+                                <div className="small text-muted">{svc.description}</div>
+                              )} */}
+                              <div className="small text-primary fw-bold mt-1">
+                                +{fmtVnd(svc.price || 0)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </Card.Body>
                 </Card>
               </Col>
