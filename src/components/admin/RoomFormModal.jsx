@@ -38,13 +38,17 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
     amenities: [], // Changed to array
     status: "available",
     capacity: "2",
+    bedLayoutId: "",
     imageUrl: "",
   });
+
+  const [bedLayouts, setBedLayouts] = useState([]);
+  const [loadingBedLayouts, setLoadingBedLayouts] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [imagePreview, setImagePreview] = useState("");
+  const [images, setImages] = useState([]); // Array of {url, isPrimary, sortOrder}
   
   // Success modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -53,6 +57,40 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
   // Error modal state
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Load bed layouts
+  useEffect(() => {
+    const loadBedLayouts = async () => {
+      setLoadingBedLayouts(true);
+      try {
+        const { data } = await axios.get("/bed-layouts");
+        if (Array.isArray(data) && data.length > 0) {
+          setBedLayouts(data);
+        } else {
+          // Fallback bed layouts
+          setBedLayouts([
+            { id: 1, layoutName: "1 Giường Đôi Lớn" },
+            { id: 2, layoutName: "2 Giường Đơn" },
+            { id: 3, layoutName: "1 Giường Đôi" },
+            { id: 4, layoutName: "3 Giường Đơn" },
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to load bed layouts:", err);
+        // Use fallback
+        setBedLayouts([
+          { id: 1, layoutName: "1 Giường Đôi Lớn" },
+          { id: 2, layoutName: "2 Giường Đơn" },
+          { id: 3, layoutName: "1 Giường Đôi" },
+          { id: 4, layoutName: "3 Giường Đơn" },
+        ]);
+      } finally {
+        setLoadingBedLayouts(false);
+      }
+    };
+
+    loadBedLayouts();
+  }, []);
 
   // Load room data when editing
   useEffect(() => {
@@ -67,6 +105,30 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
         amenitiesArray = room.amenities.split(/[,;]/).map(s => s.trim()).filter(Boolean);
       }
       
+      // Find bedLayoutId by matching type (layoutName) with bedLayouts
+      let bedLayoutId = "";
+      if (room.type && bedLayouts.length > 0) {
+        const matchedBedLayout = bedLayouts.find(bl => bl.layoutName === room.type);
+        if (matchedBedLayout) {
+          bedLayoutId = matchedBedLayout.id.toString();
+        }
+      }
+      // Also check if room has bedLayoutId directly
+      if (room.bedLayoutId) {
+        bedLayoutId = room.bedLayoutId.toString();
+      }
+      
+      // Load images - if room has imageUrl, add it as primary image
+      const roomImages = [];
+      if (imageUrl) {
+        roomImages.push({
+          url: imageUrl,
+          isPrimary: true,
+          sortOrder: 0
+        });
+      }
+      // TODO: Load additional images from room.gallery or room.images if available
+      
       setFormData({
         roomNumber: room.roomNumber || "",
         roomName: room.name || "",
@@ -75,9 +137,10 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
         amenities: amenitiesArray,
         status: room.status || "available",
         capacity: room.capacity || "2",
-        imageUrl: imageUrl,
+        bedLayoutId: bedLayoutId,
+        imageUrl: imageUrl, // Keep for backward compatibility
       });
-      setImagePreview(imageUrl);
+      setImages(roomImages);
     } else {
       // Reset form for creating new room
       setFormData({
@@ -86,11 +149,12 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
         pricePerNight: "",
         description: "",
         amenities: [],
-        status: "available",
+        status: "available", // Mặc định là "available" khi tạo mới
         capacity: "2",
+        bedLayoutId: "",
         imageUrl: "",
       });
-      setImagePreview("");
+      setImages([]);
     }
     setError("");
     setShowSuccessModal(false);
@@ -98,13 +162,30 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
     setShowErrorModal(false);
     setErrorMessage("");
     
-    // Cleanup preview URL on unmount
-    return () => {
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
+  }, [room, show, bedLayouts]);
+
+  // Update imageUrl when primary image changes
+  useEffect(() => {
+    if (images.length > 0) {
+      const primaryImage = images.find(img => img.isPrimary && !img.isUploading);
+      if (primaryImage && primaryImage.url && !primaryImage.url.startsWith('blob:')) {
+        setFormData(prev => ({ ...prev, imageUrl: primaryImage.url }));
+      } else if (images[0] && !images[0].isUploading && !images[0].url.startsWith('blob:')) {
+        setFormData(prev => ({ ...prev, imageUrl: images[0].url }));
       }
+    }
+  }, [images]);
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      images.forEach(img => {
+        if (img.url && img.url.startsWith('blob:')) {
+          URL.revokeObjectURL(img.url);
+        }
+      });
     };
-  }, [room, show]);
+  }, [images]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -125,14 +206,21 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Validate file
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      showToast.error(validation.error);
-      e.target.value = ""; // Reset input
+    // Validate all files
+    const invalidFiles = [];
+    files.forEach((file, index) => {
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        invalidFiles.push({ file, index, error: validation.error });
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      showToast.error(`Có ${invalidFiles.length} ảnh không hợp lệ: ${invalidFiles[0].error}`);
+      e.target.value = "";
       return;
     }
 
@@ -140,33 +228,94 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
     setError("");
 
     try {
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
+      // Create preview URLs for all files
+      const previewUrls = files.map(file => URL.createObjectURL(file));
+      const previewImages = previewUrls.map((url, index) => ({
+        url,
+        isPrimary: images.length === 0 && index === 0, // First image is primary if no images exist
+        sortOrder: images.length + index,
+        isUploading: true
+      }));
 
-      // Upload to Cloudinary
-      const result = await uploadRoomImage(file);
-      const cloudinaryUrl = result.url;
+      // Add preview images to state
+      setImages(prev => [...prev, ...previewImages]);
 
-      // Update form data with Cloudinary URL
-      setFormData(prev => ({ ...prev, imageUrl: cloudinaryUrl }));
-      showToast.success("Upload ảnh thành công!");
+      // Upload all files to Cloudinary
+      const uploadPromises = files.map(file => uploadRoomImage(file));
+      const results = await Promise.all(uploadPromises);
+      const cloudinaryUrls = results.map(r => r.url);
+
+      // Update images with Cloudinary URLs
+      setImages(prev => {
+        const updated = [...prev];
+        cloudinaryUrls.forEach((cloudinaryUrl, index) => {
+          const previewIndex = prev.length + index;
+          if (updated[previewIndex]) {
+            // Cleanup preview URL
+            if (updated[previewIndex].url.startsWith('blob:')) {
+              URL.revokeObjectURL(updated[previewIndex].url);
+            }
+            updated[previewIndex] = {
+              url: cloudinaryUrl,
+              isPrimary: updated[previewIndex].isPrimary,
+              sortOrder: updated[previewIndex].sortOrder,
+              isUploading: false
+            };
+          }
+        });
+        return updated;
+      });
+
+      showToast.success(`Upload ${files.length} ảnh thành công!`);
     } catch (err) {
       console.error("Upload error:", err);
       const errorMsg = err.message || "Upload ảnh thất bại";
       setError(errorMsg);
       showToast.error(errorMsg);
-      setImagePreview("");
-      setFormData(prev => ({ ...prev, imageUrl: "" }));
+      
+      // Remove failed uploads from preview
+      setImages(prev => prev.filter(img => !img.isUploading));
     } finally {
       setUploadingImage(false);
       e.target.value = ""; // Reset input
     }
   };
 
-  const handleRemoveImage = () => {
-    setImagePreview("");
-    setFormData(prev => ({ ...prev, imageUrl: "" }));
+  const handleRemoveImage = (index) => {
+    const imageToRemove = images[index];
+    
+    // Cleanup blob URL if exists
+    if (imageToRemove.url && imageToRemove.url.startsWith('blob:')) {
+      URL.revokeObjectURL(imageToRemove.url);
+    }
+
+    const newImages = images.filter((_, i) => i !== index);
+    
+    // Reorder sortOrder
+    newImages.forEach((img, i) => {
+      img.sortOrder = i;
+    });
+
+    // If removed image was primary, make first image primary
+    if (imageToRemove.isPrimary && newImages.length > 0) {
+      newImages[0].isPrimary = true;
+    }
+
+    setImages(newImages);
+    
+    // Clear imageUrl if no images left (useEffect will handle updating it when images exist)
+    if (newImages.length === 0) {
+      setFormData(prev => ({ ...prev, imageUrl: "" }));
+    }
+  };
+
+  const handleSetPrimaryImage = (index) => {
+    const newImages = images.map((img, i) => ({
+      ...img,
+      isPrimary: i === index
+    }));
+    setImages(newImages);
+    // useEffect will automatically update imageUrl when images change
   };
 
   const handleSubmit = async (e) => {
@@ -186,8 +335,15 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
       setError("Vui lòng nhập giá hợp lệ");
       return;
     }
-    if (!formData.imageUrl.trim()) {
-      setError("Vui lòng upload ảnh phòng");
+    if (images.length === 0) {
+      setError("Vui lòng upload ít nhất một ảnh cho phòng");
+      return;
+    }
+    
+    // Check if all images are uploaded (no blob URLs)
+    const hasUnuploadedImages = images.some(img => img.url.startsWith('blob:'));
+    if (hasUnuploadedImages) {
+      setError("Vui lòng chờ upload ảnh hoàn tất");
       return;
     }
 
@@ -199,15 +355,27 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
         ? formData.amenities.join(", ")
         : (formData.amenities || "");
 
+      // Prepare images payload
+      const imagesPayload = images
+        .filter(img => img.url && !img.url.startsWith('blob:')) // Only uploaded images
+        .map((img, index) => ({
+          imageUrl: img.url,
+          primary: img.isPrimary || false,
+          sortOrder: img.sortOrder !== undefined ? img.sortOrder : index
+        }));
+
       const payload = {
         roomNumber: formData.roomNumber.trim(),
         roomName: formData.roomName.trim(),
         pricePerNight: parseInt(formData.pricePerNight),
         description: formData.description.trim(),
         amenities: amenitiesString,
-        status: formData.status,
+        // Mặc định "available" khi tạo mới, giữ nguyên khi edit
+        status: isEditing ? (formData.status || "available") : "available",
         capacity: parseInt(formData.capacity),
-        imageUrl: formData.imageUrl.trim(),
+        bedLayoutId: formData.bedLayoutId ? parseInt(formData.bedLayoutId) : null,
+        imageUrl: images.length > 0 ? (images.find(img => img.isPrimary)?.url || images[0].url) : formData.imageUrl.trim(),
+        images: imagesPayload.length > 0 ? imagesPayload : undefined, // Only send if there are images
       };
 
       if (isEditing) {
@@ -432,12 +600,13 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
                   color: '#495057',
                   marginBottom: '0.5rem'
                 }}>
-                  Trạng thái
+                  Loại giường
                 </Form.Label>
                 <Form.Select 
-                  name="status" 
-                  value={formData.status} 
+                  name="bedLayoutId" 
+                  value={formData.bedLayoutId} 
                   onChange={handleChange}
+                  disabled={loadingBedLayouts}
                   style={{
                     fontSize: '0.95rem',
                     padding: '0.75rem',
@@ -445,10 +614,18 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
                     border: '1px solid #ced4da'
                   }}
                 >
-                  <option value="available">Còn trống</option>
-                  <option value="occupied">Đã đặt</option>
-                  <option value="maintenance">Bảo trì</option>
+                  <option value="">-- Chọn loại giường --</option>
+                  {bedLayouts.map((layout) => (
+                    <option key={layout.id} value={layout.id}>
+                      {layout.layoutName}
+                    </option>
+                  ))}
                 </Form.Select>
+                {loadingBedLayouts && (
+                  <Form.Text className="text-muted" style={{ fontSize: '0.85rem' }}>
+                    Đang tải danh sách giường...
+                  </Form.Text>
+                )}
               </Form.Group>
             </Col>
           </Row>
@@ -460,37 +637,104 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
               color: '#495057',
               marginBottom: '0.5rem'
             }}>
-              Ảnh chính <span className="text-danger">*</span>
+              Ảnh phòng <span className="text-danger">*</span>
             </Form.Label>
             
-            {imagePreview && (
-              <motion.div 
-                className="mb-3 position-relative" 
-                style={{ maxWidth: '400px' }}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="img-fluid rounded shadow-sm"
-                  style={{
-                    maxHeight: '200px',
-                    objectFit: 'cover',
-                    width: '100%',
-                    border: '2px solid #dee2e6'
-                  }}
-                />
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={handleRemoveImage}
-                  className="position-absolute top-0 end-0 m-2"
-                  style={{ zIndex: 10, borderRadius: '50%', width: '32px', height: '32px', padding: 0 }}
-                >
-                  ✕
-                </Button>
-              </motion.div>
+            {/* Images Preview Grid */}
+            {images.length > 0 && (
+              <div className="mb-3">
+                <Row className="g-3">
+                  {images.map((img, index) => (
+                    <Col xs={6} md={4} lg={3} key={index}>
+                      <motion.div 
+                        className="position-relative"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        style={{
+                          border: img.isPrimary ? '3px solid #28a745' : '2px solid #dee2e6',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          backgroundColor: '#f8f9fa'
+                        }}
+                      >
+                        <div style={{ position: 'relative', paddingTop: '75%' }}>
+                          <img
+                            src={img.url}
+                            alt={`Preview ${index + 1}`}
+                            className="position-absolute top-0 start-0 w-100 h-100"
+                            style={{
+                              objectFit: 'cover',
+                              opacity: img.isUploading ? 0.5 : 1
+                            }}
+                          />
+                          {img.isUploading && (
+                            <div className="position-absolute top-50 start-50 translate-middle">
+                              <Spinner size="sm" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Primary Badge */}
+                        {img.isPrimary && (
+                          <div 
+                            className="position-absolute top-0 start-0 m-2"
+                            style={{ 
+                              backgroundColor: '#28a745',
+                              color: 'white',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: '600'
+                            }}
+                          >
+                            Ảnh chính
+                          </div>
+                        )}
+                        
+                        {/* Action Buttons */}
+                        <div className="position-absolute bottom-0 end-0 m-2 d-flex gap-1">
+                          {!img.isPrimary && (
+                            <Button
+                              variant="success"
+                              size="sm"
+                              onClick={() => handleSetPrimaryImage(index)}
+                              title="Đặt làm ảnh chính"
+                              style={{ 
+                                borderRadius: '50%', 
+                                width: '28px', 
+                                height: '28px', 
+                                padding: 0,
+                                fontSize: '0.75rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              ⭐
+                            </Button>
+                          )}
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleRemoveImage(index)}
+                            title="Xóa ảnh"
+                            disabled={img.isUploading}
+                            style={{ 
+                              borderRadius: '50%', 
+                              width: '28px', 
+                              height: '28px', 
+                              padding: 0,
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </motion.div>
+                    </Col>
+                  ))}
+                </Row>
+              </div>
             )}
 
             <Form.Control
@@ -498,6 +742,7 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
               onChange={handleImageUpload}
               disabled={uploadingImage}
+              multiple
               style={{
                 fontSize: '0.95rem',
                 padding: '0.75rem',
@@ -514,7 +759,8 @@ export default function RoomFormModal({ show, onHide, onSuccess, room }) {
               </div>
             )}
             <Form.Text className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginTop: '0.5rem' }}>
-              Chọn ảnh đại diện của phòng (JPG, PNG, GIF, WEBP - tối đa 10MB)
+              Chọn một hoặc nhiều ảnh cho phòng (JPG, PNG, GIF, WEBP - tối đa 10MB mỗi ảnh). 
+              Ảnh đầu tiên sẽ được đặt làm ảnh chính, bạn có thể thay đổi bằng cách click vào ⭐.
             </Form.Text>
           </Form.Group>
 

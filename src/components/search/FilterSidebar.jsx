@@ -125,7 +125,7 @@ function FilterSidebar({ filters, onChange, onClear }) {
         <Card className="card-soft mb-3">
           <Card.Body>
             <Card.Title className="h6 mb-3 d-flex align-items-center gap-2">
-              📅 Thời gian lưu trú
+              Thời gian lưu trú
             </Card.Title>
             <Form.Group className="mb-3">
               <Form.Label className="small fw-semibold text-muted">Ngày nhận phòng</Form.Label>
@@ -151,26 +151,32 @@ function FilterSidebar({ filters, onChange, onClear }) {
               <Form.Label className="small fw-semibold text-muted">Số khách</Form.Label>
               <Row className="g-2">
                 <Col xs={6}>
-                  <Form.Select
+                  <Form.Control
+                    type="number"
+                    min="1"
+                    max="20"
                     value={filters.adults || 2}
-                    onChange={e => update('adults', Number(e.target.value))}
-                    style={{ borderRadius: '8px', fontSize: '0.9rem' }}
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                      <option key={num} value={num}>{num} người lớn</option>
-                    ))}
-                  </Form.Select>
+                    onChange={e => update('adults', Number(e.target.value) || 1)}
+                    placeholder="Người lớn"
+                    style={{ borderRadius: '8px', fontSize: '0.9rem', padding: '0.5rem' }}
+                  />
+                  <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                    Người lớn
+                  </Form.Text>
                 </Col>
                 <Col xs={6}>
-                  <Form.Select
+                  <Form.Control
+                    type="number"
+                    min="0"
+                    max="10"
                     value={filters.children || 0}
-                    onChange={e => update('children', Number(e.target.value))}
-                    style={{ borderRadius: '8px', fontSize: '0.9rem' }}
-                  >
-                    {[0, 1, 2, 3, 4, 5, 6].map(num => (
-                      <option key={num} value={num}>{num} trẻ em</option>
-                    ))}
-                  </Form.Select>
+                    onChange={e => update('children', Number(e.target.value) || 0)}
+                    placeholder="Trẻ em"
+                    style={{ borderRadius: '8px', fontSize: '0.9rem', padding: '0.5rem' }}
+                  />
+                  <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                    Trẻ em
+                  </Form.Text>
                 </Col>
               </Row>
             </Form.Group>
@@ -187,7 +193,7 @@ function FilterSidebar({ filters, onChange, onClear }) {
         <Card className="card-soft mb-3">
           <Card.Body>
             <Card.Title className="h6 mb-3 d-flex align-items-center gap-2">
-              💰 Khoảng giá
+              Khoảng giá
             </Card.Title>
             <div className="mb-2">
               <input
@@ -224,7 +230,7 @@ function FilterSidebar({ filters, onChange, onClear }) {
         <Card className="card-soft mb-3">
           <Card.Body>
             <Card.Title className="h6 mb-3 d-flex align-items-center gap-2">
-              ✨ Tiện nghi
+              Tiện nghi
             </Card.Title>
             {loadingAmenityCounts ? (
               <div className="text-center py-2 text-muted small">
@@ -273,7 +279,7 @@ function FilterSidebar({ filters, onChange, onClear }) {
           <Card className="card-soft mb-3">
             <Card.Body>
               <Card.Title className="h6 mb-3 d-flex align-items-center gap-2">
-                🛎️ Dịch vụ
+                Dịch vụ
               </Card.Title>
               {svcLoading ? (
                 <div className="text-center py-2 text-muted small">
@@ -358,7 +364,7 @@ function FilterSidebar({ filters, onChange, onClear }) {
               padding: '0.75rem'
             }}
           >
-            🗑️ Xóa tất cả bộ lọc ({activeFiltersCount})
+            Xóa tất cả bộ lọc ({activeFiltersCount})
           </Button>
         </motion.div>
       )}

@@ -138,26 +138,32 @@ export default function HeroSearch() {
                         </Form.Label>
                         <Row className="g-2">
                           <Col xs={6}>
-                            <Form.Select
+                            <Form.Control
+                              type="number"
+                              min="1"
+                              max="20"
                               value={adults}
-                              onChange={(e) => setAdults(Number(e.target.value))}
-                              style={{ borderRadius: '8px', padding: '0.5rem', fontSize: '0.9rem' }}
-                            >
-                              {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                                <option key={num} value={num}>{num} người lớn</option>
-                              ))}
-                            </Form.Select>
+                              onChange={(e) => setAdults(Number(e.target.value) || 1)}
+                              placeholder="Người lớn"
+                              style={{ borderRadius: '8px', padding: '0.75rem', fontSize: '0.9rem' }}
+                            />
+                            <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                              Người lớn
+                            </Form.Text>
                           </Col>
                           <Col xs={6}>
-                            <Form.Select
+                            <Form.Control
+                              type="number"
+                              min="0"
+                              max="10"
                               value={children}
-                              onChange={(e) => setChildren(Number(e.target.value))}
-                              style={{ borderRadius: '8px', padding: '0.5rem', fontSize: '0.9rem' }}
-                            >
-                              {[0, 1, 2, 3, 4, 5, 6].map(num => (
-                                <option key={num} value={num}>{num} trẻ em</option>
-                              ))}
-                            </Form.Select>
+                              onChange={(e) => setChildren(Number(e.target.value) || 0)}
+                              placeholder="Trẻ em"
+                              style={{ borderRadius: '8px', padding: '0.75rem', fontSize: '0.9rem' }}
+                            />
+                            <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                              Trẻ em
+                            </Form.Text>
                           </Col>
                         </Row>
                       </Form.Group>

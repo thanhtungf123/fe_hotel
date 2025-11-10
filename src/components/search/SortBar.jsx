@@ -4,11 +4,11 @@ import { ButtonGroup, ToggleButton, Dropdown } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 
 const sorts = [
-  { key: 'priceAsc', label: '💰 Giá thấp đến cao', icon: '↑' },
-  { key: 'priceDesc', label: '💰 Giá cao đến thấp', icon: '↓' },
-  { key: 'ratingDesc', label: '⭐ Đánh giá cao nhất', icon: '★' },
-  { key: 'popular', label: '🔥 Phổ biến nhất', icon: '🔥' },
-  { key: 'discountDesc', label: '🎉 Giảm giá cao nhất', icon: '✨' },
+  { key: 'priceAsc', label: 'Giá thấp đến cao', icon: '' },
+  { key: 'priceDesc', label: 'Giá cao đến thấp', icon: '' },
+  { key: 'ratingDesc', label: 'Đánh giá cao nhất', icon: '' },
+  { key: 'popular', label: 'Phổ biến nhất', icon: '' },
+  { key: 'discountDesc', label: 'Giảm giá cao nhất', icon: '' },
 ];
 
 export default function SortBar({ view, onView, sort, onSort, resultsCount }) {
