@@ -33,11 +33,15 @@ export default function Booking() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [room, setRoom] = useState(null)
+  const [services, setServices] = useState([])
+  const [selectedServiceIds, setSelectedServiceIds] = useState([])
+  const [loadingServices, setLoadingServices] = useState(false)
 
   const [form, setForm] = useState({
     checkIn: addDays(1),
     checkOut: addDays(2),
-    guests: 1,
+    adults: 1,
+    children: 0,
     specialRequests: ''
   })
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
@@ -61,6 +65,23 @@ export default function Booking() {
     return () => { mounted = false }
   }, [id])
 
+  // Load services
+  useEffect(() => {
+    let mounted = true
+    setLoadingServices(true)
+    axios
+      .get('/services')
+      .then((res) => {
+        if (mounted) setServices(Array.isArray(res.data) ? res.data : [])
+      })
+      .catch((err) => {
+        console.error('Failed to load services:', err)
+        if (mounted) setServices([])
+      })
+      .finally(() => mounted && setLoadingServices(false))
+    return () => { mounted = false }
+  }, [])
+
   const capacity = room?.capacity ?? 0
   const price = room?.priceVnd ?? 0
 
@@ -73,7 +94,30 @@ export default function Booking() {
     } catch { return 0 }
   }, [form.checkIn, form.checkOut])
 
-  const total = useMemo(() => price * Math.max(1, nights), [price, nights])
+  // Calculate services total
+  const servicesTotal = useMemo(() => {
+    return selectedServiceIds.reduce((sum, serviceId) => {
+      const service = services.find(s => s.id === serviceId)
+      return sum + (service ? (service.price || 0) : 0)
+    }, 0)
+  }, [selectedServiceIds, services])
+
+  // Total = room price + services price
+  const total = useMemo(() => {
+    const roomTotal = price * Math.max(1, nights)
+    return roomTotal + servicesTotal
+  }, [price, nights, servicesTotal])
+
+  // Toggle service selection
+  const toggleService = (serviceId) => {
+    setSelectedServiceIds(prev => {
+      if (prev.includes(serviceId)) {
+        return prev.filter(id => id !== serviceId)
+      } else {
+        return [...prev, serviceId]
+      }
+    })
+  }
 
   // KYC & Payment
   const [kyc, setKyc] = useState({
@@ -98,8 +142,13 @@ export default function Booking() {
   const validate = () => {
     if (!form.checkIn || !form.checkOut) return 'Vui lòng chọn ngày nhận/trả phòng'
     if (new Date(form.checkOut) <= new Date(form.checkIn)) return 'Ngày trả phòng phải sau ngày nhận phòng'
-    if (!form.guests || Number(form.guests) < 1) return 'Số khách không hợp lệ'
-    if (capacity && Number(form.guests) > capacity) return `Số khách tối đa: ${capacity}`
+    const adults = Number(form.adults) || 0
+    const children = Number(form.children) || 0
+    if (adults < 1) return 'Số người lớn phải ≥ 1'
+    if (children < 0) return 'Số trẻ em phải ≥ 0'
+    // Tính sức chứa: 2 trẻ em = 1 người lớn
+    const equivalentAdults = adults + Math.ceil(children / 2)
+    if (capacity && equivalentAdults > capacity) return `Số khách quy đổi (${equivalentAdults} người lớn) vượt quá sức chứa phòng (${capacity})`
     if (auth?.role && auth.role.toLowerCase() !== 'customer') return 'Chỉ tài khoản khách hàng mới được đặt phòng'
     if (!kyc.fullName) return 'Vui lòng nhập họ tên'
     if (!kyc.phoneNumber) return 'Vui lòng nhập số điện thoại'
@@ -117,7 +166,7 @@ export default function Booking() {
   const progress = useMemo(() => {
     let filled = 0
     if (form.checkIn && form.checkOut) filled += 20
-    if (form.guests >= 1) filled += 10
+    if (Number(form.adults) >= 1) filled += 10
     if (kyc.fullName) filled += 15
     if (kyc.phoneNumber) filled += 10
     if (kyc.nationalIdNumber) filled += 10
@@ -181,11 +230,13 @@ export default function Booking() {
     try {
       const payload = {
         roomId: Number(id),
-        guests: Number(form.guests),
+        adults: Number(form.adults),
+        children: Number(form.children) || 0,
         checkIn: form.checkIn,
         checkOut: form.checkOut,
         depositPercent,
         paymentChoice: payChoice,
+        serviceIds: selectedServiceIds.length > 0 ? selectedServiceIds : null, // Services
         // KYC phẳng theo BookingRequest (BE)
         fullName: kyc.fullName,
         dateOfBirth: kyc.dateOfBirth,
@@ -351,23 +402,103 @@ export default function Booking() {
 
                     <Form.Group className="mt-3">
                       <Form.Label className="fw-semibold">Số khách</Form.Label>
-                      <Form.Select
-                        name="guests"
-                        value={form.guests}
-                        onChange={onChange}
-                        required
-                        style={{ borderRadius: '10px' }}
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                          <option key={num} value={num}>
-                            {num} khách
-                          </option>
-                        ))}
-                      </Form.Select>
+                      <Row className="g-2">
+                        <Col md={6}>
+                          <Form.Label className="small text-muted">Người lớn</Form.Label>
+                          <Form.Select
+                            name="adults"
+                            value={form.adults}
+                            onChange={onChange}
+                            required
+                            style={{ borderRadius: '10px' }}
+                          >
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                              <option key={num} value={num}>
+                                {num} {num === 1 ? 'người lớn' : 'người lớn'}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Label className="small text-muted">Trẻ em</Form.Label>
+                          <Form.Select
+                            name="children"
+                            value={form.children}
+                            onChange={onChange}
+                            required
+                            style={{ borderRadius: '10px' }}
+                          >
+                            {[0, 1, 2, 3, 4, 5, 6].map((num) => (
+                              <option key={num} value={num}>
+                                {num} {num === 0 ? 'trẻ em' : num === 1 ? 'trẻ em' : 'trẻ em'}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Col>
+                      </Row>
                       {capacity && (
-                        <div className="small text-muted mt-1">Sức chứa tối đa: {capacity} khách</div>
+                        <div className="small text-muted mt-2">
+                          Sức chứa tối đa: {capacity} khách (2 trẻ em = 1 người lớn)
+                        </div>
                       )}
                     </Form.Group>
+
+                    <hr className="my-4" />
+                    <h5 className="mb-3">✨ Dịch vụ bổ sung</h5>
+                    {loadingServices ? (
+                      <div className="text-center py-3">
+                        <div className="spinner-luxury mx-auto" style={{ width: '30px', height: '30px' }} />
+                        <div className="small text-muted mt-2">Đang tải dịch vụ...</div>
+                      </div>
+                    ) : services.length > 0 ? (
+                      <div className="d-flex flex-column gap-2">
+                        {services.map((service) => (
+                          <motion.div
+                            key={service.id}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Card
+                              className={`cursor-pointer ${selectedServiceIds.includes(service.id) ? 'border-primary' : ''}`}
+                              onClick={() => toggleService(service.id)}
+                              style={{
+                                cursor: 'pointer',
+                                borderWidth: '2px',
+                                borderColor: selectedServiceIds.includes(service.id) ? 'var(--primary-gold)' : 'rgba(0,0,0,0.1)'
+                              }}
+                            >
+                              <Card.Body className="d-flex align-items-center gap-3 py-2">
+                                <Form.Check
+                                  type="checkbox"
+                                  checked={selectedServiceIds.includes(service.id)}
+                                  onChange={() => toggleService(service.id)}
+                                  style={{ transform: 'scale(1.3)' }}
+                                />
+                                <div className="flex-grow-1">
+                                  <div className="fw-semibold">{service.nameService || service.name || 'Dịch vụ'}</div>
+                                  {service.description && (
+                                    <div className="small text-muted">{service.description}</div>
+                                  )}
+                                </div>
+                                <div className="fw-bold" style={{ color: 'var(--primary-gold)', fontSize: '1.1rem' }}>
+                                  {((service.price || 0)).toLocaleString('vi-VN')}₫
+                                </div>
+                              </Card.Body>
+                            </Card>
+                          </motion.div>
+                        ))}
+                        {selectedServiceIds.length > 0 && (
+                          <div className="mt-2 p-2 bg-light rounded">
+                            <div className="small text-muted">Đã chọn {selectedServiceIds.length} dịch vụ</div>
+                            <div className="fw-semibold">
+                              Tổng dịch vụ: <span style={{ color: 'var(--primary-gold)' }}>{servicesTotal.toLocaleString('vi-VN')}₫</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-muted small">Không có dịch vụ nào hiện có.</div>
+                    )}
 
                     <hr className="my-4" />
                     <h5 className="mb-3">👤 Thông tin khách nhận phòng</h5>
@@ -637,6 +768,18 @@ export default function Booking() {
                         <div>Số đêm</div>
                         <div className="fw-semibold">{nights}</div>
                       </div>
+                      <div className="d-flex justify-content-between mb-2">
+                        <div>Tiền phòng</div>
+                        <div className="fw-semibold">{(price * Math.max(1, nights)).toLocaleString('vi-VN')}₫</div>
+                      </div>
+                      {selectedServiceIds.length > 0 && (
+                        <div className="d-flex justify-content-between mb-2">
+                          <div>Dịch vụ ({selectedServiceIds.length})</div>
+                          <div className="fw-semibold" style={{ color: 'var(--primary-gold)' }}>
+                            +{servicesTotal.toLocaleString('vi-VN')}₫
+                          </div>
+                        </div>
+                      )}
 
                       <hr />
 

@@ -37,6 +37,7 @@ export default function RoomCardRow({ room }) {
         {/* Image Section */}
         <div className="col-md-5 p-0">
           <div className="position-relative overflow-hidden hover-zoom" style={{ height: '100%', minHeight: '280px' }}>
+            {/* Discount badge - góc trên bên trái */}
             {discount > 0 && (
               <Badge 
                 bg="danger" 
@@ -52,8 +53,67 @@ export default function RoomCardRow({ room }) {
               </Badge>
             )}
             
+            {/* Rating với icon sao - góc trên bên phải (đối diện discount) */}
+            <div 
+              className="position-absolute top-0 end-0 m-3"
+              style={{ 
+                zIndex: 10,
+                background: 'rgba(0, 0, 0, 0.7)',
+                borderRadius: '8px',
+                padding: '0.4rem 0.6rem',
+                backdropFilter: 'blur(4px)'
+              }}
+            >
+              <div className="d-flex align-items-center gap-0">
+                {[...Array(5)].map((_, i) => {
+                  const fullStars = Math.floor(rating)
+                  const hasHalfStar = rating % 1 >= 0.5
+                  let starType = 'empty'
+                  if (i < fullStars) {
+                    starType = 'full'
+                  } else if (i === fullStars && hasHalfStar) {
+                    starType = 'half'
+                  }
+                  
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        fontSize: '1rem',
+                        color: starType === 'full' ? '#FFB800' : '#E0E0E0',
+                        lineHeight: '1',
+                        position: starType === 'half' ? 'relative' : 'static',
+                        display: 'inline-block',
+                        width: starType === 'half' ? '1rem' : 'auto'
+                      }}
+                    >
+                      {starType === 'half' ? (
+                        <span style={{ position: 'relative', display: 'inline-block' }}>
+                          <span style={{ color: '#E0E0E0' }}>★</span>
+                          <span 
+                            style={{ 
+                              color: '#FFB800',
+                              position: 'absolute',
+                              left: 0,
+                              top: 0,
+                              width: '50%',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            ★
+                          </span>
+                        </span>
+                      ) : (
+                        '★'
+                      )}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+            
             <LazyLoadImage
-              src={room.imageUrl}
+              src={room.imageUrl || 'https://via.placeholder.com/400x300/f0f0f0/999999?text=🏨'}
               alt={room.name}
               effect="blur"
               className="w-100 h-100"
@@ -63,19 +123,10 @@ export default function RoomCardRow({ room }) {
                 transition: 'transform 0.5s ease'
               }}
               placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em' style='font-size:24px'%3E🏨%3C/text%3E%3C/svg%3E"
-            />
-
-            {/* Reviews Badge Overlay */}
-            <div 
-              className="position-absolute bottom-0 start-0 end-0 p-3"
-              style={{
-                background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/400x300/f0f0f0/999999?text=🏨';
               }}
-            >
-              <Badge bg="dark" className="bg-opacity-75">
-                ⭐ {rating} ({reviews} đánh giá)
-              </Badge>
-            </div>
+            />
           </div>
         </div>
 
@@ -94,19 +145,12 @@ export default function RoomCardRow({ room }) {
             </h5>
           </div>
 
-          {/* Room Info */}
+          {/* Room Info */
+          }
           <div className="text-muted mb-3" style={{ fontSize: '0.95rem' }}>
-            <span className="me-3">
-              <strong>👥</strong> {room.capacity} khách
-            </span>
-            <span className="me-3">
-              <strong>🛏️</strong> {room.type || 'Standard'}
-            </span>
-            {room.sizeSqm && (
-              <span>
-                <strong>📐</strong> {room.sizeSqm}m²
-              </span>
-            )}
+            <span className="me-3">{room.capacity} khách</span>
+            <span className="me-3">{room.type || 'Standard'}</span>
+            {room.sizeSqm && (<span>{room.sizeSqm}m²</span>)}
           </div>
 
           {/* Amenities Tags */}
@@ -141,11 +185,11 @@ export default function RoomCardRow({ room }) {
             </div>
           </div>
 
-          {/* Standard Amenities Icons */}
+          {/* Standard Amenities (no icons) */}
           <div className="d-flex gap-4 text-muted small mb-4">
-            <div title="WiFi miễn phí">📶 WiFi</div>
-            <div title="Bãi đỗ xe">🅿️ Parking</div>
-            <div title="Dịch vụ phòng">🛎️ Room Service</div>
+            <div title="WiFi miễn phí">WiFi</div>
+            <div title="Bãi đỗ xe">Parking</div>
+            <div title="Dịch vụ phòng">Room Service</div>
           </div>
 
           {/* Price & Actions */}
@@ -196,7 +240,7 @@ export default function RoomCardRow({ room }) {
           {/* Hint text */}
           <div className="mt-2 text-center">
             <small className="text-muted">
-              💡 Click vào bất kỳ đâu để xem chi tiết phòng
+              Click vào bất kỳ đâu để xem chi tiết phòng
             </small>
           </div>
         </div>

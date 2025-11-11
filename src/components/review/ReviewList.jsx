@@ -8,12 +8,8 @@ export default function ReviewList({ roomId }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (!roomId) return
-    loadReviews()
-  }, [roomId])
-
   const loadReviews = async () => {
+    if (!roomId) return
     setLoading(true)
     setError('')
     try {
@@ -25,6 +21,21 @@ export default function ReviewList({ roomId }) {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadReviews()
+  }, [roomId])
+
+  // Listen for review submission event to refresh
+  useEffect(() => {
+    const handleReviewSubmitted = (e) => {
+      if (e.detail?.roomId === roomId) {
+        loadReviews()
+      }
+    }
+    window.addEventListener('review-submitted', handleReviewSubmitted)
+    return () => window.removeEventListener('review-submitted', handleReviewSubmitted)
+  }, [roomId])
 
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
@@ -65,7 +76,6 @@ export default function ReviewList({ roomId }) {
       {reviews.length === 0 ? (
         <Card>
           <Card.Body className="text-center text-muted py-5">
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💭</div>
             <p className="mb-2 fw-semibold">Chưa có đánh giá nào</p>
             <p className="small">Hãy là người đầu tiên đánh giá phòng này!</p>
           </Card.Body>
@@ -75,12 +85,16 @@ export default function ReviewList({ roomId }) {
           <motion.div
             key={review.id}
             className="mb-4 pb-4 border-bottom"
+            style={{
+              borderBottom: '1px solid #e9ecef',
+              paddingBottom: '1.5rem'
+            }}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.1 }}
           >
             <div className="d-flex align-items-start gap-3">
-              {review.accountAvatar && (
+              {review.accountAvatar ? (
                 <img
                   src={review.accountAvatar}
                   alt={review.accountName}
@@ -89,23 +103,74 @@ export default function ReviewList({ roomId }) {
                     width: '56px',
                     height: '56px',
                     objectFit: 'cover',
-                    border: '3px solid #f0f0f0'
+                    border: '3px solid #f0f0f0',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 />
+              ) : (
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center"
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    backgroundColor: '#C9A24A',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '1.2rem',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {(review.accountName || 'K')[0].toUpperCase()}
+                </div>
               )}
               <div className="flex-grow-1">
-                <div className="d-flex align-items-center gap-2 mb-2">
-                  <div className="fw-semibold">{review.accountName || 'Khách hàng'}</div>
-                  <Badge bg="warning" text="dark">
-                    ⭐ {review.rating}
-                  </Badge>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div className="fw-semibold" style={{ fontSize: '1rem', color: '#333' }}>
+                    {review.accountName || 'Khách hàng'}
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="d-flex align-items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <span 
+                          key={i}
+                          style={{ 
+                            color: i < review.rating ? '#FFB800' : '#E0E0E0',
+                            fontSize: '1rem'
+                          }}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <Badge 
+                      bg="warning" 
+                      text="dark"
+                      style={{
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        padding: '0.25rem 0.5rem'
+                      }}
+                    >
+                      {review.rating}/5
+                    </Badge>
+                  </div>
                 </div>
                 {review.comment && (
-                  <p className="mb-2" style={{ lineHeight: '1.6' }}>
+                  <p 
+                    className="mb-2" 
+                    style={{ 
+                      lineHeight: '1.7',
+                      color: '#495057',
+                      fontSize: '0.95rem'
+                    }}
+                  >
                     {review.comment}
                   </p>
                 )}
-                <div className="small text-muted">
+                <div 
+                  className="small text-muted"
+                  style={{ fontSize: '0.85rem' }}
+                >
                   {formatDate(review.createdAt)}
                 </div>
               </div>
@@ -116,4 +181,5 @@ export default function ReviewList({ roomId }) {
     </div>
   )
 }
+
 

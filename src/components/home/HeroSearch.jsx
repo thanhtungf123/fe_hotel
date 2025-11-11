@@ -8,7 +8,8 @@ export default function HeroSearch() {
   const navigate = useNavigate()
   const [checkin, setCheckin] = useState('')
   const [checkout, setCheckout] = useState('')
-  const [guests, setGuests] = useState(2)
+  const [adults, setAdults] = useState(2)
+  const [children, setChildren] = useState(0)
   
   // Parallax effect
   const { scrollY } = useScroll()
@@ -27,10 +28,11 @@ export default function HeroSearch() {
 
   const onSubmit = (e) => {
     e.preventDefault()
+    const totalGuests = adults + children
     const params = new URLSearchParams({
       checkin,
       checkout,
-      guests: String(guests)
+      guests: String(totalGuests)
     })
     navigate(`/search?${params.toString()}`)
   }
@@ -61,8 +63,8 @@ export default function HeroSearch() {
                     lineHeight: '1.2'
                   }}
                 >
-                  Trải nghiệm nghỉ dưỡng <br />
-                  <span style={{ color: '#FFD700' }}>đẳng cấp quốc tế</span>
+                  <span style={{ color: '#FFD700' }}>Trải nghiệm nghỉ dưỡng<br />
+                                          đẳng cấp quốc tế</span>
                 </h1>
               </motion.div>
 
@@ -134,17 +136,36 @@ export default function HeroSearch() {
                         <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
                           Số khách
                         </Form.Label>
-                        <Form.Select
-                          value={guests}
-                          onChange={(e) => setGuests(Number(e.target.value))}
-                          style={{ borderRadius: '8px', padding: '0.75rem' }}
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                            <option key={num} value={num}>
-                              {num} {num === 1 ? 'khách' : 'khách'}
-                            </option>
-                          ))}
-                        </Form.Select>
+                        <Row className="g-2">
+                          <Col xs={6}>
+                            <Form.Control
+                              type="number"
+                              min="1"
+                              max="20"
+                              value={adults}
+                              onChange={(e) => setAdults(Number(e.target.value) || 1)}
+                              placeholder="Người lớn"
+                              style={{ borderRadius: '8px', padding: '0.75rem', fontSize: '0.9rem' }}
+                            />
+                            <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                              Người lớn
+                            </Form.Text>
+                          </Col>
+                          <Col xs={6}>
+                            <Form.Control
+                              type="number"
+                              min="0"
+                              max="10"
+                              value={children}
+                              onChange={(e) => setChildren(Number(e.target.value) || 0)}
+                              placeholder="Trẻ em"
+                              style={{ borderRadius: '8px', padding: '0.75rem', fontSize: '0.9rem' }}
+                            />
+                            <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                              Trẻ em
+                            </Form.Text>
+                          </Col>
+                        </Row>
                       </Form.Group>
                 </Col>
                     

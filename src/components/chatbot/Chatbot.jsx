@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Button, Card, Form, InputGroup, Spinner } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
 import axios from '../../api/axiosInstance'
 import './Chatbot.css'
 
@@ -22,6 +23,36 @@ export default function Chatbot() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const formatMessage = (content) => {
+    // Check if message contains booking link marker
+    const bookingLinkRegex = /\[BOOKING_LINK:([^\]]+)\]/g
+    const parts = []
+    let lastIndex = 0
+    let match
+    
+    while ((match = bookingLinkRegex.exec(content)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', content: content.substring(lastIndex, match.index) })
+      }
+      // Add the link button
+      parts.push({ type: 'link', url: match[1] })
+      lastIndex = match.index + match[0].length
+    }
+    
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push({ type: 'text', content: content.substring(lastIndex) })
+    }
+    
+    // If no links found, return original content as text
+    if (parts.length === 0) {
+      parts.push({ type: 'text', content })
+    }
+    
+    return parts
+  }
 
   const handleSend = async (e) => {
     e.preventDefault()
@@ -115,31 +146,58 @@ export default function Chatbot() {
               background: '#f8f9fa'
             }}
           >
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                style={{
-                  marginBottom: '1rem',
-                  display: 'flex',
-                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
-                }}
-              >
+            {messages.map((msg, idx) => {
+              const formattedParts = msg.role === 'assistant' ? formatMessage(msg.content) : [{ type: 'text', content: msg.content }]
+              
+              return (
                 <div
+                  key={idx}
                   style={{
-                    maxWidth: '75%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    background: msg.role === 'user'
-                      ? 'linear-gradient(135deg, #C9A24A 0%, #B8933D 100%)'
-                      : 'white',
-                    color: msg.role === 'user' ? 'white' : '#333',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
                   }}
                 >
-                  {msg.content}
+                  <div
+                    style={{
+                      maxWidth: '75%',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '12px',
+                      background: msg.role === 'user'
+                        ? 'linear-gradient(135deg, #C9A24A 0%, #B8933D 100%)'
+                        : 'white',
+                      color: msg.role === 'user' ? 'white' : '#333',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {formattedParts.map((part, partIdx) => {
+                      if (part.type === 'link') {
+                        return (
+                          <div key={partIdx} style={{ marginTop: '0.75rem' }}>
+                            <Link to={part.url}>
+                              <Button
+                                size="sm"
+                                style={{
+                                  background: 'linear-gradient(135deg, #C9A24A 0%, #B8933D 100%)',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  padding: '0.5rem 1rem',
+                                  fontWeight: '500',
+                                  width: '100%'
+                                }}
+                              >
+                                Đặt phòng ngay
+                              </Button>
+                            </Link>
+                          </div>
+                        )
+                      }
+                      return <span key={partIdx}>{part.content}</span>
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             {loading && (
               <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                 <div
@@ -181,4 +239,5 @@ export default function Chatbot() {
     </>
   )
 }
+
 
