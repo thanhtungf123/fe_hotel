@@ -193,7 +193,7 @@ export default function Admin() {
                   color: "var(--primary-dark)"
                 }}
               >
-                🏨 {isAdmin ? "Admin Dashboard" : "Staff Dashboard"}
+                 {isAdmin ? "Admin Dashboard" : "Staff Dashboard"}
               </h2>
               <div className="text-muted">
                 {isAdmin ? "Quản lý Khách hàng, Nhân viên & Phòng" : "Quản lý Khách hàng & Phòng"}

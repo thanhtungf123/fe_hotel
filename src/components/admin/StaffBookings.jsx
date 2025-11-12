@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, Table, Button, Badge, Alert, Form, Row, Col, Modal, Spinner } from "react-bootstrap";
 import axios from "../../api/axiosInstance";
 import { useAuth } from "../../store/auth";
+import "../../styles/booking-buttons.css";
 
 const fmtVnd = (n) => (Number(n)||0).toLocaleString("vi-VN")+"₫";
 
@@ -24,6 +25,13 @@ export default function StaffBookings(){
   const [confirmAction, setConfirmAction] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState("");
+
+  // Room verification modal state
+  const [showVerifyRoom, setShowVerifyRoom] = useState(false);
+  const [verifyBookingId, setVerifyBookingId] = useState(null);
+  const [verifyForm, setVerifyForm] = useState({ isRoomReady: null, issueDescription: "" });
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
 
   const load = async () => {
     setLoading(true); setErr("");
@@ -56,7 +64,7 @@ export default function StaffBookings(){
   }, [detailId]);
 
   const Status = ({s}) => (
-    <Badge bg={s==="confirmed"?"success": s==="pending"?"secondary": s==="checked_in"?"info": s==="cancelled"?"dark":"warning"} className="text-uppercase">
+    <Badge bg={s==="confirmed"?"success": s==="pending"?"secondary": s==="pending_verification"?"warning": s==="checked_in"?"info": s==="cancelled"?"dark":"secondary"} className="text-uppercase">
       {String(s||"").replaceAll("_"," ")}
     </Badge>
   );
@@ -138,7 +146,7 @@ export default function StaffBookings(){
                   <td>
                     {b.services && Array.isArray(b.services) && b.services.length > 0 && (
                       <div className="small text-muted">
-                        ✨ {b.services.length} dịch vụ
+                         {b.services.length} dịch vụ
                       </div>
                     )}
                   </td>
@@ -199,20 +207,28 @@ export default function StaffBookings(){
                     <div className="mb-2"><strong>Khách hàng</strong></div>
                     <div className="mb-2">Họ tên: {detail.customer?.fullName || "—"}</div>
                     <div className="mb-2">SĐT: {detail.customer?.phoneNumber || "—"}</div>
-                    <div className="mb-2">CCCD: {detail.customer?.nationalIdNumber || "—"}</div>
-                    <Row className="g-2">
-                      {detail.customer?.idFrontUrl && (
-                        <Col xs={6}><img alt="ID front" src={detail.customer.idFrontUrl} className="img-fluid rounded border" /></Col>
-                      )}
-                      {detail.customer?.idBackUrl && (
-                        <Col xs={6}><img alt="ID back" src={detail.customer.idBackUrl} className="img-fluid rounded border" /></Col>
-                      )}
-                    </Row>
                   </Card.Body>
                 </Card>
               </Col>
             </Row>
             <div className="mt-3 d-flex gap-2">
+              {/* ✅ NEW: Room Verification Button */}
+              {detail.status === "pending_verification" && (
+                <Button 
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => {
+                    setVerifyBookingId(detailId);
+                    setVerifyForm({ isRoomReady: null, issueDescription: "" });
+                    setVerifyError("");
+                    setShowVerifyRoom(true);
+                  }}
+                >
+                  <i className="bi bi-clipboard-check me-1"></i>
+                  Kiểm tra phòng
+                </Button>
+              )}
+
               {detail.status === "confirmed" && (() => {
                 const checkInDate = detail.checkIn ? new Date(detail.checkIn + 'T00:00:00') : null;
                 const today = new Date();
@@ -221,7 +237,8 @@ export default function StaffBookings(){
                 
                 return (
                   <Button 
-                    variant="success" 
+                    variant="outline-success"
+                    size="sm"
                     onClick={() => {
                       setConfirmAction({
                         title: "Xác nhận Check-in",
@@ -257,13 +274,15 @@ export default function StaffBookings(){
                     disabled={!canCheckIn}
                     title={!canCheckIn && checkInDate ? `Chỉ có thể check-in từ ngày ${detail.checkIn}` : ""}
                   >
-                    ✓ Check-in {!canCheckIn && checkInDate ? `(từ ${detail.checkIn})` : ""}
+                    <i className="bi bi-box-arrow-in-right me-1"></i>
+                    Check-in
                   </Button>
                 );
               })()}
               {detail.status === "checked_in" && (
                 <Button 
-                  variant="warning" 
+                  variant="outline-warning"
+                  size="sm"
                   onClick={() => {
                     setConfirmAction({
                       title: "Xác nhận Check-out",
@@ -296,7 +315,8 @@ export default function StaffBookings(){
                     setShowConfirm(true);
                   }}
                 >
-                  🚪 Check-out
+                  <i className="bi bi-box-arrow-right me-1"></i>
+                  Check-out
                 </Button>
               )}
             </div>
@@ -374,6 +394,120 @@ export default function StaffBookings(){
               </>
             ) : (
               confirmAction?.confirmLabel || "Xác nhận"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ✅ Room Verification Modal */}
+      <Modal show={showVerifyRoom} onHide={() => setShowVerifyRoom(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title> Kiểm tra phòng - Booking #{verifyBookingId}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {verifyError && <Alert variant="danger">{verifyError}</Alert>}
+          
+          <Alert variant="info" className="mb-3">
+            <strong>Hướng dẫn:</strong> Vui lòng kiểm tra phòng và xác nhận trạng thái:
+            <ul className="mb-0 mt-2">
+              <li><strong>Phòng sẵn sàng:</strong> Gửi email xác nhận đặt phòng cho khách hàng</li>
+              <li><strong>Phòng có vấn đề:</strong> Hủy booking, hoàn tiền 100% và gửi email thông báo</li>
+            </ul>
+          </Alert>
+
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label><strong>Trạng thái phòng <span className="text-danger">*</span></strong></Form.Label>
+              <div>
+                <Form.Check
+                  type="radio"
+                  id="room-ready"
+                  name="roomStatus"
+                  label=" Phòng sẵn sàng (Confirmed)"
+                  checked={verifyForm.isRoomReady === true}
+                  onChange={() => setVerifyForm({ ...verifyForm, isRoomReady: true, issueDescription: "" })}
+                  className="mb-2"
+                />
+                <Form.Check
+                  type="radio"
+                  id="room-issue"
+                  name="roomStatus"
+                  label=" Phòng có vấn đề (Cancelled + Refund 100%)"
+                  checked={verifyForm.isRoomReady === false}
+                  onChange={() => setVerifyForm({ ...verifyForm, isRoomReady: false })}
+                />
+              </div>
+            </Form.Group>
+
+            {verifyForm.isRoomReady === false && (
+              <Form.Group className="mb-3">
+                <Form.Label><strong>Mô tả vấn đề <span className="text-danger">*</span></strong></Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={verifyForm.issueDescription}
+                  onChange={(e) => setVerifyForm({ ...verifyForm, issueDescription: e.target.value })}
+                  placeholder="VD: Phòng đang bảo trì hệ thống điều hòa..."
+                  required
+                />
+                <Form.Text className="text-muted">
+                  Thông tin này sẽ được gửi trong email thông báo cho khách hàng
+                </Form.Text>
+              </Form.Group>
+            )}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            onClick={() => {
+              setShowVerifyRoom(false);
+              setVerifyError("");
+            }}
+            disabled={verifyLoading}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant={verifyForm.isRoomReady === true ? "success" : verifyForm.isRoomReady === false ? "danger" : "secondary"}
+            onClick={async () => {
+              if (verifyForm.isRoomReady === null) {
+                setVerifyError("Vui lòng chọn trạng thái phòng");
+                return;
+              }
+              if (verifyForm.isRoomReady === false && !verifyForm.issueDescription.trim()) {
+                setVerifyError("Vui lòng mô tả vấn đề của phòng");
+                return;
+              }
+
+              setVerifyLoading(true);
+              setVerifyError("");
+
+              try {
+                await axios.post(`/staff/bookings/${verifyBookingId}/verify-room`, {
+                  isRoomReady: verifyForm.isRoomReady,
+                  issueDescription: verifyForm.issueDescription
+                });
+                setShowVerifyRoom(false);
+                setDetailId(null);
+                load();
+              } catch (e) {
+                setVerifyError(e?.response?.data?.error || e?.response?.data?.message || e.message || "Lỗi khi kiểm tra phòng");
+              } finally {
+                setVerifyLoading(false);
+              }
+            }}
+            disabled={verifyLoading || verifyForm.isRoomReady === null}
+          >
+            {verifyLoading ? (
+              <>
+                <Spinner as="span" size="sm" animation="border" className="me-2" />
+                Đang xử lý...
+              </>
+            ) : (
+              verifyForm.isRoomReady === true ? " Xác nhận phòng sẵn sàng" :
+              verifyForm.isRoomReady === false ? " Hủy và hoàn tiền" :
+              "Chọn trạng thái"
             )}
           </Button>
         </Modal.Footer>

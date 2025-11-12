@@ -8,6 +8,7 @@ import Image from 'react-bootstrap/Image';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/auth';
 import axios from '../api/axiosInstance';
+import NotificationBell from '../components/common/NotificationBell';
 
 export default function TopNavbar() {
   const { user, logout } = useAuth();
@@ -32,6 +33,9 @@ export default function TopNavbar() {
     ? user.avatarUrl 
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&size=40&background=d4af37&color=fff&bold=true`;
 
+  // Debug: Check if user is logged in
+  const isLoggedIn = !!user?.token;
+
   return (
     <Navbar expand="lg" className="bg-body-tertiary py-3 sticky-top shadow-sm">
       <Container>
@@ -47,6 +51,12 @@ export default function TopNavbar() {
             <Nav.Link href="#about">Giới thiệu</Nav.Link>
             <Nav.Link href="#contact">Liên hệ</Nav.Link>
           </Nav>
+
+          {isLoggedIn && (
+            <div className="me-3 d-flex align-items-center" style={{ minWidth: '40px', minHeight: '40px' }}>
+              <NotificationBell />
+            </div>
+          )}
 
           {user?.token ? (
             <Dropdown align="end">
@@ -65,10 +75,10 @@ export default function TopNavbar() {
 
                 {/* Link tài khoản khách */}
                 <Dropdown.Item as={Link} to="/account/bookings">
-                  🧾 Lịch sử đặt phòng
+                  Lịch sử đặt phòng
                 </Dropdown.Item>
                 <Dropdown.Item as={Link} to="/account/profile">
-                  👤 Thông tin cá nhân
+                  Thông tin cá nhân
                 </Dropdown.Item>
 
                 {/* Khu quản trị (Staff/Admin) */}
@@ -76,7 +86,7 @@ export default function TopNavbar() {
                   <>
                     <Dropdown.Divider />
                     <Dropdown.Item as={Link} to="/admin">
-                      ⚙️ Trang quản trị
+                      Trang quản trị
                     </Dropdown.Item>
                   </>
                 )}
