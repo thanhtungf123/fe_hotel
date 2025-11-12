@@ -23,11 +23,24 @@ export default function PaymentButton({ bookingId, totalPrice, purpose = "full",
   };
 
   return (
-    <div className="mt-3">
-      {error && <Alert variant="danger">{error}</Alert>}
-      <Button className="w-100" variant="success" disabled={loading} onClick={handlePayment}>
-        {loading ? (<><Spinner animation="border" size="sm" /> &nbsp;Đang tạo liên kết...</>)
-                 : (<>💳 {label || "Thanh toán"} {totalPrice ? `(${Number(totalPrice).toLocaleString()} VND)` : ""}</>)}
+    <div className="btn-payment-container">
+      {error && <Alert variant="danger" className="small mb-2">{error}</Alert>}
+      <Button 
+        className="btn-booking btn-payment" 
+        disabled={loading} 
+        onClick={handlePayment}
+      >
+        {loading ? (
+          <>
+            <Spinner animation="border" size="sm" style={{ width: '0.85rem', height: '0.85rem' }} />
+            <span>Đang tạo...</span>
+          </>
+        ) : (
+          <>
+            <i className="bi bi-credit-card"></i>
+            <span>{label || "Thanh toán"}</span>
+          </>
+        )}
       </Button>
     </div>
   );

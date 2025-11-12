@@ -188,7 +188,7 @@ export default function HeroSearch() {
                             boxShadow: '0 4px 12px rgba(201, 162, 74, 0.3)'
                           }}
                         >
-                          🔍 Tìm phòng ngay
+                          Tìm phòng ngay
                         </Button>
                       </motion.div>
                 </Col>

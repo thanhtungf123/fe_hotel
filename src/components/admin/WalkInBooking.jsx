@@ -22,7 +22,6 @@ export default function WalkInBooking() {
     checkOut: "",
     fullName: "",
     phoneNumber: "",
-    nationalIdNumber: "",
     gender: "male",
   });
 
@@ -88,7 +87,6 @@ export default function WalkInBooking() {
     }
     if (!form.fullName) return "Vui lòng nhập tên khách hàng";
     if (!form.phoneNumber) return "Vui lòng nhập số điện thoại";
-    if (!form.nationalIdNumber) return "Vui lòng nhập số CMND/CCCD";
     return null;
   };
 
@@ -116,7 +114,6 @@ export default function WalkInBooking() {
         checkOut: "",
         fullName: "",
         phoneNumber: "",
-        nationalIdNumber: "",
         gender: "male",
       });
       setSelectedServiceIds([]);
@@ -146,8 +143,16 @@ export default function WalkInBooking() {
     return sum + (service ? (service.price || 0) : 0);
   }, 0);
   
-  // Total = room + services
-  const totalPrice = roomTotal + servicesTotal;
+  // Get selected services list
+  const selectedServices = selectedServiceIds.map(serviceId => 
+    services.find(s => s.id === serviceId)
+  ).filter(Boolean);
+  
+  // Calculate pricing with tax and service fee
+  const subtotal = roomTotal + servicesTotal;
+  const tax = Math.round(subtotal * 0.10); // 10% tax
+  const serviceFee = Math.round(subtotal * 0.05); // 5% service fee
+  const totalPrice = subtotal + tax + serviceFee;
 
   const toggleService = (serviceId) => {
     setSelectedServiceIds(prev => {
@@ -301,18 +306,25 @@ export default function WalkInBooking() {
                 {selectedRoom && nights > 0 && (
                   <div className="d-flex align-items-end h-100">
                     <div className="w-100">
-                      <Form.Label className="text-muted">Tổng tiền</Form.Label>
-                      <div className="fs-4 fw-bold text-success" style={{ color: "var(--primary-gold)" }}>
-                        {totalPrice.toLocaleString()}₫
-                        <Badge bg="secondary" className="ms-2">
-                          {nights} đêm
-                        </Badge>
+                      <Form.Label className="text-muted">Chi tiết thanh toán</Form.Label>
+                      <div className="small mb-1">
+                        <div>• Phòng ({nights} đêm): {roomTotal.toLocaleString()}₫</div>
+                        {selectedServices.length > 0 && (
+                          <>
+                            <div>• Dịch vụ: {servicesTotal.toLocaleString()}₫</div>
+                            {selectedServices.map(service => (
+                              <div key={service.id} className="ps-3 text-muted" style={{ fontSize: '0.85em' }}>
+                                - {service.nameService || service.name}: {(service.price || 0).toLocaleString()}₫
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        <div>• Thuế (10%): {tax.toLocaleString()}₫</div>
+                        <div>• Phí dịch vụ (5%): {serviceFee.toLocaleString()}₫</div>
                       </div>
-                      {selectedServiceIds.length > 0 && (
-                        <div className="small text-muted mt-1">
-                          (Phòng: {roomTotal.toLocaleString()}₫ + Dịch vụ: {servicesTotal.toLocaleString()}₫)
-                        </div>
-                      )}
+                      <div className="fs-4 fw-bold text-success" style={{ color: "var(--primary-gold)" }}>
+                        Tổng: {totalPrice.toLocaleString()}₫
+                      </div>
                     </div>
                   </div>
                 )}
@@ -405,18 +417,6 @@ export default function WalkInBooking() {
                     type="text"
                     value={form.phoneNumber}
                     onChange={(e) => handleChange("phoneNumber", e.target.value)}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>CMND/CCCD <span className="text-danger">*</span></Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={form.nationalIdNumber}
-                    onChange={(e) => handleChange("nationalIdNumber", e.target.value)}
                     required
                   />
                 </Form.Group>

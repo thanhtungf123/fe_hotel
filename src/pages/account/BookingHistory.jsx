@@ -7,6 +7,7 @@ import CancelModal from "./CancelModal";
 import PaymentButton from "../../components/PaymentButton";
 import ReviewModal from "../../components/review/ReviewModal";
 import "../../styles/account.css";
+import "../../styles/booking-buttons.css";
 
 const fmtVnd = (n) => (Number(n) || 0).toLocaleString("vi-VN") + "₫";
 
@@ -35,6 +36,12 @@ export default function BookingHistory() {
   const [refundForm, setRefundForm] = useState({ accountHolder: "", accountNumber: "", bankName: "" });
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundErr, setRefundErr] = useState("");
+
+  // invoice modal state
+  const [invoiceTarget, setInvoiceTarget] = useState(null);
+  const [invoice, setInvoice] = useState(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceErr, setInvoiceErr] = useState("");
 
 
   // nếu chưa login -> điều hướng
@@ -72,6 +79,7 @@ export default function BookingHistory() {
   const statusOptions = [
     { key: "", label: "Tất cả" },
     { key: "pending", label: "Chờ xác nhận" },
+    { key: "pending_verification", label: "Chờ kiểm tra phòng" },
     { key: "confirmed", label: "Đã xác nhận" },
     { key: "cancel_requested", label: "Chờ duyệt huỷ" },
     { key: "checked_in", label: "Đã nhận phòng" },
@@ -82,6 +90,7 @@ export default function BookingHistory() {
   const badge = (s) => {
     const map = {
       pending: "secondary",
+      pending_verification: "warning",
       confirmed: "primary",
       cancel_requested: "warning",
       checked_in: "success",
@@ -137,6 +146,23 @@ export default function BookingHistory() {
       setRefundErr(e?.response?.data?.message || e.message || "Gửi thông tin hoàn tiền thất bại");
     } finally {
       setRefundLoading(false);
+    }
+  };
+
+  const loadInvoice = async (bookingId) => {
+    setInvoiceTarget(bookingId);
+    setInvoiceLoading(true);
+    setInvoiceErr("");
+    setInvoice(null);
+
+    try {
+      const { data } = await axios.get(`/invoices/${bookingId}`);
+      setInvoice(data);
+    } catch (e) {
+      setInvoiceErr(e?.response?.data?.error || e?.response?.data?.message || e.message || "Không thể tải hóa đơn");
+      setInvoiceTarget(null);
+    } finally {
+      setInvoiceLoading(false);
     }
   };
 
@@ -197,9 +223,18 @@ export default function BookingHistory() {
                           )}
                         </div>
                         {/* NEW: Check-in code */}
+                        {/* ✅ NEW: Pending Verification Alert */}
+                        {String(b.status).toLowerCase() === 'pending_verification' && (
+                          <Alert className="pending-verification-alert small py-2 mt-2 mb-1">
+                            <i className="bi bi-hourglass-split me-2"></i>
+                            <strong>Đang chờ nhân viên kiểm tra phòng</strong> - Vui lòng đợi xác nhận từ khách sạn
+                          </Alert>
+                        )}
+
                         {b.checkInCode && b.checkInCode.trim() !== "" ? (
-                          <div className="small mt-1">
-                            🔑 Mã check-in: <code className="fw-bold text-primary">{b.checkInCode}</code>
+                          <div className="checkin-code-display small mt-1">
+                            <i className="bi bi-key-fill me-2"></i>
+                            Mã check-in: <code>{b.checkInCode}</code>
                           </div>
                         ) : (b.status === "confirmed" && (b.paymentState === "deposit_paid" || b.paymentState === "paid_in_full")) ? (
                           <div className="small mt-1 text-warning">
@@ -226,69 +261,96 @@ export default function BookingHistory() {
                       </div>
                     </div>
 
-                    <div className="mt-2 d-flex gap-2 flex-wrap">
-                        <Button as={Link} to={`/rooms/${b.roomId}`} variant="light" className="border">
+                    <div className="booking-actions">
+                        <Button 
+                          as={Link} 
+                          to={`/rooms/${b.roomId}`} 
+                          className="btn-booking btn-view-room"
+                        >
+                          <i className="bi bi-eye"></i>
                           Xem phòng
                         </Button>
 
-                        {/* Yêu cầu huỷ như cũ */}
+                        {/* Yêu cầu huỷ */}
                         {canRequestCancel(b.status) && (
-                          <Button variant="outline-danger" onClick={() => { setCancelErr(""); setTarget(b); }}>
+                          <Button 
+                            className="btn-booking btn-cancel-request"
+                            onClick={() => { setCancelErr(""); setTarget(b); }}
+                          >
+                            <i className="bi bi-x-circle"></i>
                             Yêu cầu huỷ
                           </Button>
                         )}
 
-                        {/* ✅ NEW: Gửi thông tin hoàn tiền - Chỉ hiển thị khi cancelled và chưa gửi */}
+                        {/* ✅ NEW: Gửi thông tin hoàn tiền */}
                         {String(b.status).toLowerCase() === 'cancelled' && 
                          !b.refundSubmitted && 
                          !b.refundCompleted && (
                           <Button 
-                            variant="outline-primary" 
+                            className="btn-booking btn-refund-info"
                             onClick={() => {
                               setRefundTarget(b);
                               setRefundForm({ accountHolder: "", accountNumber: "", bankName: "" });
                               setRefundErr("");
                             }}
                           >
-                            💳 Gửi thông tin hoàn tiền
+                            <i className="bi bi-credit-card-2-back"></i>
+                            Hoàn tiền
                           </Button>
                         )}
 
                         {/* ✅ Hiển thị trạng thái hoàn tiền */}
                         {String(b.status).toLowerCase() === 'cancelled' && b.refundSubmitted && (
-                          <div className="small text-muted">
+                          <div className="refund-status-badge">
                             {b.refundCompleted ? (
-                              <Badge bg="success">✅ Đã hoàn tiền</Badge>
+                              <Badge bg="success" className="booking-status-badge">
+                                <i className="bi bi-check-circle-fill me-1"></i>
+                                Đã hoàn tiền
+                              </Badge>
                             ) : (
-                              <Badge bg="warning">⏳ Đang chờ hoàn tiền</Badge>
+                              <Badge bg="warning" className="booking-status-badge">
+                                <i className="bi bi-clock-fill me-1"></i>
+                                Đang chờ hoàn tiền
+                              </Badge>
                             )}
                           </div>
                         )}
 
-                        {/* ✅ NEW: Thanh toán phần còn lại - Chỉ hiển thị khi deposit_paid và còn nợ */}
+                        {/* ✅ NEW: Thanh toán phần còn lại */}
                         {String(b.status).toLowerCase()==='confirmed' && 
                          String(b.paymentState).toLowerCase()==='deposit_paid' && 
                          Number(b.amountRemaining)>0 && (
-                          <div style={{minWidth: 240}}>
-                            <PaymentButton
-                              bookingId={b.id}
-                              totalPrice={b.amountRemaining}
-                              purpose="balance"
-                              label="Thanh toán phần còn lại"
-                            />
-                          </div>
+                          <PaymentButton
+                            bookingId={b.id}
+                            totalPrice={b.amountRemaining}
+                            purpose="balance"
+                            label="Thanh toán"
+                          />
                         )}
 
-                        {/* Viết đánh giá - Cho phép khi đã confirmed (đã đặt phòng thành công) */}
+                        {/* Viết đánh giá */}
                         {(String(b.status).toLowerCase() === 'confirmed' || 
                           String(b.status).toLowerCase() === 'checked_in' ||
                           String(b.status).toLowerCase() === 'checked_out' || 
                           String(b.status).toLowerCase() === 'completed') && (
                           <Button 
-                            variant="outline-primary" 
+                            className="btn-booking btn-review"
                             onClick={() => setReviewTarget(b)}
                           >
-                            Viết đánh giá
+                            <i className="bi bi-star-fill"></i>
+                            Đánh giá
+                          </Button>
+                        )}
+
+                        {/* ✅ NEW: Xem hóa đơn */}
+                        {(String(b.paymentState).toLowerCase() === 'deposit_paid' ||
+                          String(b.paymentState).toLowerCase() === 'paid_in_full') && (
+                          <Button 
+                            className="btn-booking btn-invoice"
+                            onClick={() => loadInvoice(b.id)}
+                          >
+                            <i className="bi bi-receipt"></i>
+                            Hóa đơn
                           </Button>
                         )}
                       </div>
@@ -408,6 +470,167 @@ export default function BookingHistory() {
             </Modal.Footer>
           </Form>
         </Modal>
+
+        {/* ✅ Invoice Modal */}
+        <Modal 
+          show={invoiceTarget !== null} 
+          onHide={() => setInvoiceTarget(null)}
+          size="lg"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title> Hóa đơn đặt phòng</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {invoiceLoading && <Alert variant="info">Đang tải hóa đơn...</Alert>}
+            {invoiceErr && <Alert variant="danger">{invoiceErr}</Alert>}
+            
+            {invoice && !invoiceLoading && (
+              <div className="invoice-content" style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                <div className="text-center mb-4">
+                  <h5>HÓA ĐƠN THANH TOÁN</h5>
+                  <div className="text-muted">Aurora Palace Hotel</div>
+                </div>
+                
+                <hr />
+                
+                <Row className="mb-3">
+                  <Col xs={6}>
+                    <small className="text-muted">Mã hóa đơn:</small><br />
+                    <strong>{invoice.invoiceNumber}</strong>
+                  </Col>
+                  <Col xs={6} className="text-end">
+                    <small className="text-muted">Ngày xuất:</small><br />
+                    <strong>{invoice.issueDate ? new Date(invoice.issueDate).toLocaleString('vi-VN') : ''}</strong>
+                  </Col>
+                </Row>
+                
+                {invoice.checkInCode && (
+                  <Alert variant="success" className="py-2">
+                    <small className="text-muted">Mã check-in:</small> <strong className="fs-5">{invoice.checkInCode}</strong>
+                  </Alert>
+                )}
+                
+                <hr />
+                
+                <div className="mb-3">
+                  <h6>THÔNG TIN KHÁCH HÀNG</h6>
+                  <div><small className="text-muted">Họ tên:</small> {invoice.customerName}</div>
+                  <div><small className="text-muted">Số điện thoại:</small> {invoice.customerPhone}</div>
+                  <div><small className="text-muted">Email:</small> {invoice.customerEmail}</div>
+                </div>
+                
+                <hr />
+                
+                <div className="mb-3">
+                  <h6>THÔNG TIN PHÒNG</h6>
+                  <div><small className="text-muted">Phòng:</small> {invoice.roomName}</div>
+                  <div><small className="text-muted">Check-in:</small> {invoice.checkIn}</div>
+                  <div><small className="text-muted">Check-out:</small> {invoice.checkOut}</div>
+                  <div>
+                    <small className="text-muted">Số đêm:</small> {invoice.nights} đêm &nbsp;•&nbsp; 
+                    {invoice.adults} người lớn{invoice.children > 0 && `, ${invoice.children} trẻ em`}
+                  </div>
+                  
+                  {invoice.services && invoice.services.length > 0 && (
+                    <div className="mt-2">
+                      <small className="text-muted d-block mb-1">Dịch vụ đã chọn:</small>
+                      <ul className="mb-0 ps-4">
+                        {invoice.services.map((s, idx) => (
+                          <li key={idx}>
+                            {s.name}: {fmtVnd(s.price)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                
+                <hr />
+                
+                <div className="mb-3">
+                  <h6>CHI TIẾT GIÁ</h6>
+                  <Row className="mb-1">
+                    <Col xs={7}>Tiền phòng ({invoice.nights} đêm):</Col>
+                    <Col xs={5} className="text-end">{fmtVnd(invoice.roomTotal)}</Col>
+                  </Row>
+                  <Row className="mb-1">
+                    <Col xs={7}>Dịch vụ bổ sung:</Col>
+                    <Col xs={5} className="text-end">{fmtVnd(invoice.servicesTotal)}</Col>
+                  </Row>
+                  <hr className="my-2" />
+                  <Row className="mb-1">
+                    <Col xs={7}>Tạm tính:</Col>
+                    <Col xs={5} className="text-end">{fmtVnd(invoice.subtotal)}</Col>
+                  </Row>
+                  <Row className="mb-1">
+                    <Col xs={7}>Thuế VAT (10%):</Col>
+                    <Col xs={5} className="text-end">{fmtVnd(invoice.tax)}</Col>
+                  </Row>
+                  <Row className="mb-1">
+                    <Col xs={7}>Phí dịch vụ (5%):</Col>
+                    <Col xs={5} className="text-end">{fmtVnd(invoice.serviceFee)}</Col>
+                  </Row>
+                  <hr className="my-2" />
+                  <Row className="fw-bold fs-5">
+                    <Col xs={7}>TỔNG CỘNG:</Col>
+                    <Col xs={5} className="text-end text-primary">{fmtVnd(invoice.total)}</Col>
+                  </Row>
+                </div>
+                
+                <hr />
+                
+                <div className="mb-3">
+                  <h6>THÔNG TIN THANH TOÁN</h6>
+                  <Row className="mb-1">
+                    <Col xs={7}>Trạng thái:</Col>
+                    <Col xs={5} className="text-end">
+                      <Badge bg={invoice.paymentState === 'paid_in_full' ? 'success' : 'warning'}>
+                        {invoice.paymentState === 'paid_in_full' ? 'Đã thanh toán đủ' : 'Đã đặt cọc'}
+                      </Badge>
+                    </Col>
+                  </Row>
+                  <Row className="mb-1">
+                    <Col xs={7}>Đã thanh toán:</Col>
+                    <Col xs={5} className="text-end text-success fw-bold">{fmtVnd(invoice.paidAmount)}</Col>
+                  </Row>
+                  {invoice.depositAmount > 0 && (
+                    <Row className="mb-1">
+                      <Col xs={7}>Tiền cọc:</Col>
+                      <Col xs={5} className="text-end">{fmtVnd(invoice.depositAmount)}</Col>
+                    </Row>
+                  )}
+                </div>
+                
+                <Alert variant="info" className="mt-3 small">
+                  <div>⏰ <strong>Thời gian check-in:</strong> 14:00</div>
+                  <div>⏰ <strong>Thời gian check-out:</strong> 12:00</div>
+                </Alert>
+                
+                <div className="text-center text-muted small mt-4">
+                  <div>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ!</div>
+                  <div>📞 Hotline: +84 123 456 789 &nbsp;•&nbsp; ✉️ Email: info@aurorapalacehotel.com</div>
+                </div>
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setInvoiceTarget(null)}>
+              Đóng
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* Review Modal */}
+        <ReviewModal
+          show={reviewTarget !== null}
+          onHide={() => setReviewTarget(null)}
+          bookingId={reviewTarget?.id}
+          roomId={reviewTarget?.roomId}
+          onSuccess={() => {
+            setReviewTarget(null);
+            load();
+          }}
+        />
       </div>
     </main>
   );
