@@ -142,6 +142,61 @@ h6 { font-size: 1rem; }
   animation: fadeInUp 1s ease-out;
 }
 
+.hero-search-form {
+  border-radius: 16px;
+}
+
+.hero-search-form .hero-input {
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  height: 56px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.hero-search-form .hero-input--compact {
+  height: 48px;
+  font-size: 0.9rem;
+}
+
+.hero-search-form .hero-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.hero-search-form .hero-form-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.hero-search-form .hero-submit-btn {
+  background: linear-gradient(135deg, #C9A24A 0%, #B8933D 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(201, 162, 74, 0.3);
+}
+
+.hero-search-form .hero-submit-btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(201, 162, 74, 0.35);
+}
+
+@media (max-width: 992px) {
+  .hero-search-form .hero-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-search-form .hero-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

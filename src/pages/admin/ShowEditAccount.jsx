@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Form, Button, Alert, Card, Spinner } from "react-bootstrap";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import axios from "../../api/axiosInstance";
+import { useAuth } from "../../store/auth";
 
 export default function ShowEditAccount() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -21,13 +23,21 @@ export default function ShowEditAccount() {
     // Nếu bạn cần roleId thì mở thêm:
     roleId: ""
   });
-
-  const [roleInfo, setRoleInfo] = useState({ id: "", name: "" });
+const [roleInfo, setRoleInfo] = useState({ id: "", name: "" });
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((s) => ({ ...s, [name]: type === "checkbox" ? checked : value }));
   };
+
+  const currentRoleName = (() => {
+    let rn =
+      (typeof user?.role === "string" ? user.role : undefined) ??
+      user?.role?.name ??
+      user?.role?.role_name;
+    return typeof rn === "string" ? rn.toLowerCase() : undefined;
+  })();
+  const isAdmin = currentRoleName === "admin";
 
   // Fetch account by id
   useEffect(() => {
@@ -57,7 +67,15 @@ export default function ShowEditAccount() {
           phoneNumber: data?.phoneNumber ?? data?.phone ?? "",
           isActive: data?.isActive ?? (data?.status ? String(data.status).toLowerCase() === "active" : true),
           password: "",
-          roleId: data?.role?.id ?? ""
+          roleId: data?.role?.id != null ? String(data.role.id) : ""
+        });
+        setRoleInfo({
+          id: data?.role?.id ?? "",
+          name:
+            data?.role?.name ??
+            data?.role?.role_name ??
+            data?.role?.roleName ??
+            ""
         });
       } catch (ex) {
         if (!alive) return;
@@ -94,21 +112,15 @@ export default function ShowEditAccount() {
         // role: form.roleId ? { id: Number(form.roleId) } : undefined
       };
 
-      // map role_id -> role object (nếu user chọn)
-if (form.roleId && form.roleId !== "") {
-  const rid = Number(form.roleId); // "1" | "2" -> 1 | 2
-  // vì Form.Select chỉ cho 1 hoặc 2 nên không cần validate thêm,
-  // nhưng nếu muốn chắc chắn:
-  if (rid !== 1 && rid !== 2) {
-    setError("Role ID chỉ được 1 (Account) hoặc 2 (Employee).");
-    setSaving(false);
-    return;
-  }
-  payload.role = { id: rid };
-} else {
-  // không chọn -> giữ nguyên role hiện tại (không gửi field role)
-  // nếu bạn muốn ép clear role (hiếm khi cần), có thể đặt payload.role = null;
-}
+      if (isAdmin && form.roleId && form.roleId !== "") {
+        const rid = Number(form.roleId);
+        if (![1, 3].includes(rid)) {
+          setError("Role chỉ hợp lệ: 1 (Customer), 3 (Staff).");
+          setSaving(false);
+          return;
+        }
+        payload.role = { id: rid };
+      }
 
       const params = {};
       if (form.password && form.password.length > 0) { //password
@@ -219,18 +231,26 @@ if (form.roleId && form.roleId !== "") {
                   />
                 </Col>
 
-                <Col md={3}>
-                  <Form.Label>Role ID</Form.Label>
-                  <Form.Select
-                    name="roleId"
-                    value={form.roleId}
-                    onChange={(e) => setForm(s => ({ ...s, roleId: e.target.value }))}
-                  >
-                    <option value="">— Keep current —</option>
-                    <option value="1">1 — Account</option>
-                    <option value="2">2 — Employee</option>
-                  </Form.Select>
-                </Col>
+                {isAdmin ? (
+                  <Col md={3}>
+                    <Form.Label>Role</Form.Label>
+                    <Form.Select
+                      name="roleId"
+                      value={form.roleId}
+                      onChange={(e) => setForm(s => ({ ...s, roleId: e.target.value }))}
+                    >
+                      <option value="">— Giữ nguyên —</option>
+                      <option value="1">Customer</option>
+                      <option value="3">Staff</option>
+                    </Form.Select>
+                  </Col>
+                ) : (
+                  <Col md={3}>
+                    <Form.Label>Role</Form.Label>
+                    <Form.Control value={roleInfo.name || (form.roleId === "2" ? "Staff" : "Customer")} disabled readOnly />
+                    <Form.Text className="text-muted">Chỉ admin mới được thay đổi vai trò.</Form.Text>
+                  </Col>
+                )}
 
                 <Col md={6}>
                   <Form.Label>New Password (optional)</Form.Label>

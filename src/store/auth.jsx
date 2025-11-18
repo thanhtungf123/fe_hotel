@@ -1,14 +1,36 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
+
+const SHOULD_RESET_AUTH_ON_DEV_BOOT =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_KEEP_AUTH_BETWEEN_RUNS !== "true";
+
+function ensureFreshAuthForDevSession() {
+  if (!SHOULD_RESET_AUTH_ON_DEV_BOOT) return;
+  try {
+    const bootedKey = "__auth_bootstrapped__";
+    if (!sessionStorage.getItem(bootedKey)) {
+      localStorage.removeItem("auth");
+      sessionStorage.setItem(bootedKey, "1");
+    }
+  } catch {
+    // ignore storage errors (private mode, etc.)
+  }
+}
+ensureFreshAuthForDevSession();
 
 const AuthCtx = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // { token, accountId, fullName, role }
-
-  useEffect(() => {
+function readPersistedAuth() {
+  try {
     const raw = localStorage.getItem("auth");
-    if (raw) setUser(JSON.parse(raw));
-  }, []);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(() => readPersistedAuth()); // { token, accountId, fullName, role }
 
   const login = (payload) => {
     setUser(payload);

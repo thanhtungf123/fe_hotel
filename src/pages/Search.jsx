@@ -1,9 +1,11 @@
-// src/pages/Search.jsx - Enhanced
+// src/pages/Search.jsx
 import React, { useEffect, useMemo, useState } from 'react'
 import { Container, Row, Col } from 'react-bootstrap'
+import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import axios from 'axios'
-import SortBar from '../components/search/SortBar'
+import HeroSearchBar from '../components/search/HeroSearchBar'
+import QuickFilters from '../components/search/QuickFilters'
 import FilterSidebar from '../components/search/FilterSidebar.jsx'
 import RoomCardRow from '../components/search/RoomCardRow'
 import RoomCard from '../components/home/RoomCard'
@@ -14,6 +16,7 @@ import { calculateDiscount } from '../utils/discount'
 import '../styles/search.css'
 
 export default function Search(){
+  const location = useLocation()
   // Dùng URL tuyệt đối ở dev để tránh rủi ro proxy
   const API =
     (import.meta.env.MODE === 'development'
@@ -25,12 +28,42 @@ export default function Search(){
   const [error, setError] = useState(null)
   const [raw, setRaw] = useState([])
 
-  const [view, setView] = useState('list')
+  const view = 'list' // Fixed to list view
   const [sort, setSort] = useState('priceAsc')
   const [filters, setFilters] = useState({
-    priceMax: 10000000, priceMin: 1000, amenities: [], status: [], 
+    priceMax: 10000000, priceMin: 0, amenities: [], status: [], 
     adults: 2, children: 0, checkin:'', checkout:''
   })
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const checkin = params.get('checkin') || ''
+    const checkout = params.get('checkout') || ''
+    const guestsParam = params.get('guests')
+    const guests = guestsParam ? parseInt(guestsParam, 10) : null
+
+    setFilters(prev => {
+      let changed = false
+      const next = { ...prev }
+      if (checkin && checkin !== prev.checkin) {
+        next.checkin = checkin
+        changed = true
+      }
+      if (checkout && checkout !== prev.checkout) {
+        next.checkout = checkout
+        changed = true
+      }
+      if (Number.isFinite(guests) && guests > 0) {
+        const currentGuests = (prev.adults || 0) + (prev.children || 0)
+        if (guests !== currentGuests) {
+          next.adults = Math.max(1, guests)
+          next.children = 0
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [location.search])
 
   useEffect(()=>{
     setLoading(true)
@@ -108,39 +141,48 @@ export default function Search(){
     
     return sorted;
   }, [raw, sort])
-  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 1000, amenities: [], status: [], adults: 2, children: 0, checkin:'', checkout:'' })
+  const clearFilters = ()=> setFilters({ priceMax: 10000000, priceMin: 0, amenities: [], status: [], adults: 2, children: 0, checkin:'', checkout:'' })
 
   return (
     <motion.div
-      className="py-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Container className="search-wrap">
+      {/* Hero Search Bar */}
+      <HeroSearchBar 
+        filters={filters} 
+        onChange={setFilters}
+        onSearch={() => {
+          // Trigger re-fetch when search button is clicked
+          showToast.info('Đang tìm kiếm phòng...')
+        }}
+      />
+
+      <Container style={{ maxWidth: '1400px' }} className="px-3 px-lg-4 py-4">
         <Row className="g-4">
-          <Col lg={4} xl={3}>
+          {/* Filter Sidebar */}
+          <Col lg={3}>
             <motion.div
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
             >
               <FilterSidebar filters={filters} onChange={setFilters} onClear={clearFilters}/>
             </motion.div>
           </Col>
-          
-          <Col lg={8} xl={9}>
+
+          {/* Results */}
+          <Col lg={9}>
             <motion.div
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <SortBar 
-                view={view} 
-                onView={setView} 
-                sort={sort} 
-                onSort={setSort}
-                resultsCount={rooms.length}
+              {/* Quick Filters */}
+              <QuickFilters 
+                activeSort={sort}
+                onSortChange={setSort}
               />
               
               {/* Loading State */}

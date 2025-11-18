@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Badge, Spinner, Alert } from 'react-bootstrap'
+import { Card, Badge, Spinner, Alert, Button } from 'react-bootstrap'
 import { motion } from 'framer-motion'
 import axios from '../../api/axiosInstance'
+import { useAuth } from '../../store/auth'
+import showConfirm from '../common/ConfirmModal'
+import showToast from '../../utils/toast'
 
 export default function ReviewList({ roomId }) {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
+  const auth = useAuth()
+  const currentAccountId = auth?.user?.accountId
 
   const loadReviews = async () => {
     if (!roomId) return
@@ -19,6 +25,34 @@ export default function ReviewList({ roomId }) {
       setError(e?.response?.data?.message || 'Không thể tải đánh giá')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const emitReviewUpdated = () => {
+    const detail = { roomId }
+    window.dispatchEvent(new CustomEvent('review-submitted', { detail }))
+    window.dispatchEvent(new CustomEvent('review-deleted', { detail }))
+  }
+
+  const handleDelete = async (reviewId) => {
+    const confirmed = await showConfirm({
+      title: 'Xóa đánh giá',
+      message: 'Bạn có chắc muốn xóa đánh giá này? Bạn có thể viết lại sau.',
+      confirmText: 'Xóa',
+      variant: 'danger'
+    })
+    if (!confirmed) return
+
+    try {
+      setDeletingId(reviewId)
+      await axios.delete(`/reviews/${reviewId}`)
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId))
+      emitReviewUpdated()
+      showToast.success('Đã xóa đánh giá')
+    } catch (e) {
+      showToast.error(e?.response?.data?.message || 'Xóa đánh giá thất bại')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -129,6 +163,17 @@ export default function ReviewList({ roomId }) {
                     {review.accountName || 'Khách hàng'}
                   </div>
                   <div className="d-flex align-items-center gap-2">
+                    {currentAccountId && currentAccountId === review.accountId && (
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleDelete(review.id)}
+                        disabled={deletingId === review.id}
+                      >
+                        {deletingId === review.id ? 'Đang xóa...' : 'Xóa'}
+                      </Button>
+                    )}
                     <div className="d-flex align-items-center gap-1">
                       {[...Array(5)].map((_, i) => (
                         <span 

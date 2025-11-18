@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import axios from "../api/axiosInstance";
 import { useAuth } from "../store/auth";
 import showToast from "../utils/toast";
+import showConfirm from "../components/common/ConfirmModal";
 import { GridSkeleton } from "../components/common/LoadingSkeleton";
 import RoomManagement from "../components/admin/RoomManagement";
 import ServicesManagement from "../components/admin/ServicesManagement";
@@ -89,10 +90,26 @@ export default function Admin() {
 
   const norm = (v) => (v ?? "").toString().toLowerCase();
 
+  const normalizeRole = (role) => {
+    const value =
+      (typeof role === "string" ? role : undefined) ??
+      role?.name ??
+      role?.role_name ??
+      role?.roleName;
+    return typeof value === "string" ? value.toLowerCase() : undefined;
+  };
+
+  const manageableAccounts = useMemo(() => {
+    const nonAdminAccounts = accounts.filter((a) => normalizeRole(a?.role) !== "admin");
+    if (isAdmin) return nonAdminAccounts;
+    return nonAdminAccounts.filter((a) => normalizeRole(a?.role) === "customer");
+  }, [accounts, isAdmin]);
+
   const filteredAccounts = useMemo(() => {
+    const base = manageableAccounts;
     const q = norm(qAcc);
-    if (!q) return accounts;
-    return accounts.filter((a) =>
+    if (!q) return base;
+    return base.filter((a) =>
       [
         a.id,
         a.fullName,
@@ -105,7 +122,7 @@ export default function Admin() {
         .map(norm)
         .some((s) => s.includes(q))
     );
-  }, [accounts, qAcc]);
+  }, [manageableAccounts, qAcc]);
 
   const filteredEmployees = useMemo(() => {
     const q = norm(qEmp);
@@ -121,8 +138,14 @@ export default function Admin() {
   // Allow both admin and staff to access
   if (roleName !== "admin" && roleName !== "staff") return <Navigate to="/" replace />;
 
-  const handleDeleteAccount = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this account?")) return;
+  const handleDeleteAccount = async (id, fullName) => {
+    const confirmed = await showConfirm({
+      title: "Xóa tài khoản",
+      message: `Bạn có chắc muốn xóa tài khoản${fullName ? ` "${fullName}"` : ""}?`,
+      confirmText: "Xóa",
+      variant: "danger"
+    });
+    if (!confirmed) return;
 
     try {
       let res;
@@ -193,7 +216,7 @@ export default function Admin() {
                   color: "var(--primary-dark)"
                 }}
               >
-                🏨 {isAdmin ? "Admin Dashboard" : "Staff Dashboard"}
+                 {isAdmin ? "Admin Dashboard" : "Staff Dashboard"}
               </h2>
               <div className="text-muted">
                 {isAdmin ? "Quản lý Khách hàng, Nhân viên & Phòng" : "Quản lý Khách hàng & Phòng"}
@@ -201,14 +224,9 @@ export default function Admin() {
             </Col>
             <Col className="text-end">
               {isAdmin && (
-                <>
-                  <Button as={Link} to="/admin/reports" variant="warning" className="me-2" style={{ borderRadius: "10px" }}>
-                    Báo cáo
-                  </Button>
-                  <Button as={Link} to="/employee" variant="outline-secondary" className="me-2" style={{ borderRadius: "10px" }}>
-                    Đến trang Nhân viên
-                  </Button>
-                </>
+                <Button as={Link} to="/admin/reports" variant="warning" className="me-2" style={{ borderRadius: "10px" }}>
+                  Báo cáo
+                </Button>
               )}
               <Button as={Link} to="/" style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)", border: "none", borderRadius: "10px" }}>
                 Về trang chủ
@@ -219,7 +237,7 @@ export default function Admin() {
 
         <Tabs defaultActiveKey="accounts" id="admin-tabs" className="mb-4" style={{ borderBottom: "2px solid rgba(201, 162, 74, 0.3)" }}>
           {/* -------- Accounts -------- */}
-          <Tab eventKey="accounts" title={`Customer (${accounts.length})`}>
+          <Tab eventKey="accounts" title={`Quản lý tài khoản (${manageableAccounts.length})`}>
             <Row className="mb-3">
               <Col md={6}>
                 <Form.Control placeholder="Search by name, email, username, phone, role, status..." value={qAcc} onChange={(e) => setQAcc(e.target.value)} />
@@ -261,7 +279,7 @@ export default function Admin() {
                           <td className="text-capitalize">{roleLabel || "-"}</td>
                           <td><StatusBadge value={a.isActive ? "Active" : "Disabled"} /></td>
                           <td className="text-nowrap">
-                            <Button size="sm" variant="outline-danger" className="me-2" onClick={() => handleDeleteAccount(a.id)}> Delete </Button>
+                            <Button size="sm" variant="outline-danger" className="me-2" onClick={() => handleDeleteAccount(a.id, a.fullName)}> Delete </Button>
                             <Button as={Link} to={`/admin/accounts/${a.id}`} size="sm" variant="outline-secondary">Edit</Button>
                           </td>
                         </tr>
@@ -348,7 +366,7 @@ export default function Admin() {
             <CancelRequestsTab />
           </Tab>
 
-          <Tab eventKey="staffBookings" title="Quản lý booking">
+          <Tab eventKey="staffBookings" title="Quản lý đặt phòng">
             <StaffBookings />
           </Tab>
 

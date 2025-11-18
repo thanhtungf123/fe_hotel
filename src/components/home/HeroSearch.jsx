@@ -91,109 +91,94 @@ export default function HeroSearch() {
               >
                 <Form 
                   onSubmit={onSubmit} 
-                  className="bg-white p-4 shadow-soft"
+                  className="bg-white p-4 shadow-soft hero-search-form"
                   style={{
                     borderRadius: '16px',
                     backdropFilter: 'blur(10px)',
                     background: 'rgba(255, 255, 255, 0.98)'
                   }}
                 >
-                  <Row className="g-3 align-items-center">
-                    <Col md={12} lg={3}>
-                      <Form.Group>
-                        <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
-                          Ngày nhận phòng
-                        </Form.Label>
-                        <Form.Control
-                          type="date"
-                          value={checkin}
-                          onChange={(e) => setCheckin(e.target.value)}
-                          required
-                          min={new Date().toISOString().split('T')[0]}
-                          style={{ borderRadius: '8px', padding: '0.75rem' }}
-                        />
-                      </Form.Group>
-                </Col>
-                    
-                    <Col md={12} lg={3}>
-                      <Form.Group>
-                        <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
-                          Ngày trả phòng
-                        </Form.Label>
-                        <Form.Control
-                          type="date"
-                          value={checkout}
-                          onChange={(e) => setCheckout(e.target.value)}
-                          required
-                          min={checkin}
-                          style={{ borderRadius: '8px', padding: '0.75rem' }}
-                        />
-                      </Form.Group>
-                </Col>
-                    
-                    <Col md={12} lg={3}>
-                      <Form.Group>
-                        <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
-                          Số khách
-                        </Form.Label>
-                        <Row className="g-2">
-                          <Col xs={6}>
-                            <Form.Control
-                              type="number"
-                              min="1"
-                              max="20"
-                              value={adults}
-                              onChange={(e) => setAdults(Number(e.target.value) || 1)}
-                              placeholder="Người lớn"
-                              style={{ borderRadius: '8px', padding: '0.75rem', fontSize: '0.9rem' }}
-                            />
-                            <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
-                              Người lớn
-                            </Form.Text>
-                          </Col>
-                          <Col xs={6}>
-                            <Form.Control
-                              type="number"
-                              min="0"
-                              max="10"
-                              value={children}
-                              onChange={(e) => setChildren(Number(e.target.value) || 0)}
-                              placeholder="Trẻ em"
-                              style={{ borderRadius: '8px', padding: '0.75rem', fontSize: '0.9rem' }}
-                            />
-                            <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
-                              Trẻ em
-                            </Form.Text>
-                          </Col>
-                        </Row>
-                      </Form.Group>
-                </Col>
-                    
-                    <Col md={12} lg={3}>
-                      <motion.div
-                        className="d-grid"
-                        style={{ marginTop: '1.5rem' }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                  <div className="hero-form-grid">
+                    <div>
+                      <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
+                        Ngày nhận phòng
+                      </Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={checkin}
+                        onChange={(e) => setCheckin(e.target.value)}
+                        required
+                        min={new Date().toISOString().split('T')[0]}
+                        className="hero-input"
+                      />
+                    </div>
+
+                    <div>
+                      <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
+                        Ngày trả phòng
+                      </Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={checkout}
+                        onChange={(e) => setCheckout(e.target.value)}
+                        required
+                        min={checkin}
+                        className="hero-input"
+                      />
+                    </div>
+
+                    <div>
+                      <Form.Label className="text-start w-100 mb-1 small fw-semibold text-muted">
+                        Số khách
+                      </Form.Label>
+                      <div className="d-flex gap-2">
+                        <div className="flex-fill">
+                          <Form.Control
+                            type="number"
+                            min="1"
+                            max="20"
+                            value={adults}
+                            onChange={(e) => setAdults(Number(e.target.value) || 1)}
+                            placeholder="Người lớn"
+                            className="hero-input hero-input--compact"
+                          />
+                          <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                            Người lớn
+                          </Form.Text>
+                        </div>
+                        <div className="flex-fill">
+                          <Form.Control
+                            type="number"
+                            min="0"
+                            max="10"
+                            value={children}
+                            onChange={(e) => setChildren(Number(e.target.value) || 0)}
+                            placeholder="Trẻ em"
+                            className="hero-input hero-input--compact"
+                          />
+                          <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+                            Trẻ em
+                          </Form.Text>
+                        </div>
+                      </div>
+                    </div>
+
+                    <motion.div
+                      className="d-grid"
+                      style={{ alignSelf: 'flex-end' }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className="hero-submit-btn w-100"
                       >
-                        <Button
-                          type="submit"
-                          size="lg"
-                          style={{
-                            background: 'linear-gradient(135deg, #C9A24A 0%, #B8933D 100%)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.75rem',
-                            fontWeight: '600',
-                            boxShadow: '0 4px 12px rgba(201, 162, 74, 0.3)'
-                          }}
-                        >
-                          🔍 Tìm phòng ngay
-                        </Button>
-                      </motion.div>
-                </Col>
-              </Row>
-            </Form>
+                        Tìm phòng ngay
+                      </Button>
+                    </motion.div>
+                  </div>
+                </Form>
               </motion.div>
 
               {/* Scroll Indicator */}

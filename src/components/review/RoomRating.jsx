@@ -32,13 +32,17 @@ export default function RoomRating({ roomId }) {
 
   // Listen for review submission event to refresh
   useEffect(() => {
-    const handleReviewSubmitted = (e) => {
+    const handleReviewUpdated = (e) => {
       if (e.detail?.roomId === roomId) {
         loadRating()
       }
     }
-    window.addEventListener('review-submitted', handleReviewSubmitted)
-    return () => window.removeEventListener('review-submitted', handleReviewSubmitted)
+    window.addEventListener('review-submitted', handleReviewUpdated)
+    window.addEventListener('review-deleted', handleReviewUpdated)
+    return () => {
+      window.removeEventListener('review-submitted', handleReviewUpdated)
+      window.removeEventListener('review-deleted', handleReviewUpdated)
+    }
   }, [roomId])
 
   if (loading) {

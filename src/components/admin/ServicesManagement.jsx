@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Row, Col, Table, Spinner, Alert, Form, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "../../api/axiosInstance";
+import showConfirm from "../common/ConfirmModal";
 /**
  * ServiceManagement
  * - Lists services with { id, nameService, price }
@@ -76,8 +77,14 @@ export default function ServiceManagement({
     });
   }, [services, q]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this service?")) return;
+  const handleDelete = async (id, name) => {
+    const confirmed = await showConfirm({
+      title: "Xóa dịch vụ",
+      message: `Bạn có chắc muốn xóa dịch vụ${name ? ` "${name}"` : ""}?`,
+      confirmText: "Xóa",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     const msgOf = (err) =>
       err?.response?.data?.message || err?.response?.data || err?.message || "Unknown error";
@@ -155,7 +162,7 @@ export default function ServiceManagement({
                           size="sm"
                           variant="outline-danger"
                           className="me-2"
-                          onClick={() => handleDelete(s.id)}
+                          onClick={() => handleDelete(s.id, name)}
                         >
                           Delete
                         </Button>
