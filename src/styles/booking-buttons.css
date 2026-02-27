@@ -1,0 +1,223 @@
+/* ===================================================
+   BOOKING HISTORY - CLEAN & MINIMAL BUTTON STYLES
+   =================================================== */
+
+/* Container for buttons */
+.booking-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* Base button style - Clean & Minimal */
+.btn-booking {
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  border: 1.5px solid;
+  background: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: none;
+  white-space: nowrap;
+  min-height: 32px;
+}
+
+.btn-booking:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-booking:active {
+  transform: translateY(0);
+}
+
+.btn-booking i {
+  font-size: 0.9rem;
+}
+
+/* View Room Button */
+.btn-view-room {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.btn-view-room:hover {
+  background: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+/* Cancel Request Button */
+.btn-cancel-request {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.btn-cancel-request:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+/* Refund Info Button */
+.btn-refund-info {
+  border-color: #0dcaf0;
+  color: #0dcaf0;
+}
+
+.btn-refund-info:hover {
+  background: #0dcaf0;
+  color: white;
+  border-color: #0dcaf0;
+}
+
+/* Review Button */
+.btn-review {
+  border-color: #fd7e14;
+  color: #fd7e14;
+}
+
+.btn-review:hover {
+  background: #fd7e14;
+  color: white;
+  border-color: #fd7e14;
+}
+
+/* Invoice Button */
+.btn-invoice {
+  border-color: #198754;
+  color: #198754;
+}
+
+.btn-invoice:hover {
+  background: #198754;
+  color: white;
+  border-color: #198754;
+}
+
+/* Payment Button */
+.btn-payment {
+  border-color: #0d6efd !important;
+  color: #0d6efd !important;
+}
+
+.btn-payment:hover {
+  background: #0d6efd !important;
+  color: white !important;
+  border-color: #0d6efd !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-payment:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-payment:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: white !important;
+  color: #0d6efd !important;
+}
+
+/* Payment Button Container */
+.btn-payment-container {
+  display: inline-block;
+}
+
+/* Status Badges - Simple */
+.booking-status-badge {
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Refund Status Badges */
+.refund-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Pending Verification Alert - Clean */
+.pending-verification-alert {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #856404;
+}
+
+.pending-verification-alert strong {
+  color: #664d03;
+}
+
+/* Check-in Code Display - Clean */
+.checkin-code-display {
+  background: #e7f3ff;
+  border: 1px solid #b6d4fe;
+  border-radius: 6px;
+  padding: 6px 12px;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.checkin-code-display code {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0d6efd;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #b6d4fe;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .booking-actions {
+    gap: 6px;
+  }
+  
+  .btn-booking {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .btn-booking i {
+    font-size: 0.8rem;
+  }
+  
+  .btn-payment-container {
+    width: 100%;
+  }
+  
+  .btn-payment-container .btn-booking {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Focus state */
+.btn-booking:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+/* Disabled state */
+.btn-booking:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-booking:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+

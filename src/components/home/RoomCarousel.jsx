@@ -6,7 +6,8 @@ import '../../styles/carousel.css';
 export default function RoomCarousel({ rooms, title = "Phòng gợi ý dành cho bạn" }) {
   const navigate = useNavigate();
 
-  if (!rooms || rooms.length === 0) {
+  // Defensive: ensure rooms is an array before rendering
+  if (!Array.isArray(rooms) || rooms.length === 0) {
     return null;
   }
 

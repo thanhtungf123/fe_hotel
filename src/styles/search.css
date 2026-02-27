@@ -1,4 +1,45 @@
-/* Enhanced Search Page Styles */
+/* Enhanced Search Page Styles - Modern Hotel Booking Design */
+
+/* Hero Search Bar */
+.hero-search-bar {
+  position: relative;
+  z-index: 5;
+  margin-bottom: 2rem;
+}
+
+.hero-search-bar .form-control {
+  transition: all 0.3s ease;
+}
+
+.hero-search-bar .form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(201, 162, 74, 0.25);
+  border-color: #C9A24A;
+  transform: translateY(-2px);
+}
+
+.hero-search-bar .form-label {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Quick Filters */
+.quick-filters {
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quick-filters .btn {
+  white-space: nowrap;
+}
 
 /* Container */
 .search-wrap {
@@ -11,24 +52,32 @@
 .card-soft {
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
   background: white;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-soft:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
+  border-color: rgba(201, 162, 74, 0.2);
 }
 
 /* Sticky Sidebar - Fixed để theo scroll */
 .side-card, .filter-sidebar {
   position: sticky;
-  top: 100px; /* Cách top một chút để không bị navbar che */
+  top: 100px; /* Cách top nhiều hơn để không bị hero search bar che */
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   padding-right: 0.5rem;
-  z-index: 100; /* Đảm bảo hiển thị trên các element khác */
+  z-index: 1; /* Thấp hơn hero search bar để không đè lên */
+}
+
+/* Map Preview Styles */
+.filter-sidebar .card-soft:first-child {
+  background: linear-gradient(135deg, #C9A24A 0%, #B8933D 100%);
+  border: none;
+  box-shadow: 0 4px 16px rgba(201, 162, 74, 0.3);
 }
 
 /* Custom Scrollbar for Sidebar */
@@ -103,8 +152,29 @@
 }
 
 .hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  border-color: rgba(201, 162, 74, 0.3);
+}
+
+/* Room Card Specific Styles */
+.hover-lift .row {
+  height: 100%;
+}
+
+/* Rating Badge Styles */
+.card-soft .fw-bold[style*="color"] {
+  text-shadow: none;
+}
+
+/* Amenity Icons */
+.card-soft .d-flex.gap-3 svg {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.card-soft:hover .d-flex.gap-3 svg {
+  opacity: 1;
 }
 
 /* Sort Bar Styling */
@@ -231,6 +301,7 @@
     position: static;
     max-height: none;
     margin-bottom: 2rem;
+    top: 0;
   }
 
   .search-wrap {
@@ -239,6 +310,25 @@
 
   .result-thumb {
     height: 200px;
+  }
+
+  .hero-search-bar {
+    padding: 1.5rem 0 !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .hero-search-bar .row {
+    gap: 0.75rem !important;
+  }
+
+  .quick-filters .d-flex {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .quick-filters .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -256,6 +346,19 @@
   .sort-bar h4 {
     font-size: 1.25rem;
   }
+
+  .hero-search-bar .col-lg-3,
+  .hero-search-bar .col-lg-2 {
+    width: 100%;
+  }
+
+  .card-soft .col-md-4 {
+    min-height: 200px !important;
+  }
+
+  .card-soft .fw-bold[style*="fontSize: 1.75rem"] {
+    font-size: 1.5rem !important;
+  }
 }
 
 @media (max-width: 576px) {
@@ -265,6 +368,23 @@
 
   .result-thumb {
     height: 180px;
+  }
+
+  .hero-search-bar {
+    margin-bottom: 1rem !important;
+    border-radius: 0 0 12px 12px !important;
+  }
+
+  .quick-filters {
+    padding: 0.75rem !important;
+  }
+
+  .card-soft .p-3 {
+    padding: 1rem !important;
+  }
+
+  .card-soft h5 {
+    font-size: 1.1rem !important;
   }
 }
 

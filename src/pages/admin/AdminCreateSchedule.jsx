@@ -9,13 +9,40 @@ import {
   Spinner,
   Alert,
 } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import axios from "../../api/axiosInstance";
 import { ArrowLeft } from "react-bootstrap-icons"; // Tạm thời bỏ icon do lỗi build
+import { useAuth } from "../../store/auth";
 
 // --- Dữ liệu giả lập đã bị xóa ---
 
 export default function AdminCreateSchedule() {
+  const { user } = useAuth();
+  
+  // Check role - only admin can create schedules
+  const getRoleName = () => {
+    let rn =
+      (typeof user?.role === "string" ? user.role : undefined) ??
+      user?.role?.name ??
+      user?.role?.role_name;
+
+    if (!rn) {
+      try {
+        const raw = sessionStorage.getItem("auth") || localStorage.getItem("auth");
+        const auth = raw ? JSON.parse(raw) : undefined;
+        rn =
+          (typeof auth?.role === "string" ? auth.role : undefined) ??
+          auth?.role?.name ??
+          auth?.role?.role_name;
+      } catch { }
+    }
+    return typeof rn === "string" ? rn.toLowerCase() : undefined;
+  };
+
+  const roleName = getRoleName();
+  if (!user?.token) return <Navigate to="/login" replace />;
+  if (roleName !== "admin") return <Navigate to="/admin" replace />;
+
 // --- ⭐ BẮT ĐẦU CẬP NHẬT (Ràng buộc ngày) ⭐ ---
 // Lấy ngày hôm nay theo múi giờ địa phương (không dùng UTC)
 // và định dạng thành YYYY-MM-DD để dùng cho thuộc tính 'min'

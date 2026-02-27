@@ -8,6 +8,9 @@ import 'react-lazy-load-image-component/src/effects/blur.css'
 import axios from 'axios'
 import showToast from '../utils/toast'
 import { GridSkeleton } from '../components/common/LoadingSkeleton'
+import RoomRating from '../components/review/RoomRating'
+import ReviewList from '../components/review/ReviewList'
+import ReviewFormForRoom from '../components/review/ReviewFormForRoom'
 import '../styles/room-detail.css'
 
 export default function RoomDetail() {
@@ -80,7 +83,7 @@ export default function RoomDetail() {
           animate={{ opacity: 1, y: 0 }}
           className="alert alert-danger text-center"
         >
-          <h4>⚠️ Đã xảy ra lỗi</h4>
+          <h4>Đã xảy ra lỗi</h4>
           <p>{error}</p>
           <Button variant="primary" as={Link} to="/search">
             ← Quay lại tìm kiếm
@@ -98,7 +101,7 @@ export default function RoomDetail() {
           animate={{ opacity: 1, y: 0 }}
           className="alert alert-warning text-center"
         >
-          <h4>🔍 Không tìm thấy phòng</h4>
+          <h4>Không tìm thấy phòng</h4>
           <Button variant="primary" as={Link} to="/search">
             ← Quay lại tìm kiếm
           </Button>
@@ -130,13 +133,23 @@ export default function RoomDetail() {
             {room.name}
           </h1>
           <div className="d-flex align-items-center gap-3 text-muted mb-4 flex-wrap">
-            <Badge bg="warning" text="dark" className="px-3 py-2">
-              ⭐ {room.rating ?? 4.7} ({room.reviews ?? 0} đánh giá)
+            <Badge 
+              bg="warning" 
+              text="dark" 
+              className="px-3 py-2"
+              style={{
+                fontSize: '1rem',
+                fontWeight: '600',
+                borderRadius: '8px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+              }}
+            >
+              <strong>{room.rating ?? 4.7}</strong> điểm ({room.reviews ?? 0} đánh giá)
             </Badge>
-            <div>👥 {room.capacity ?? 0} khách</div>
-            <div>🛏️ {bedText}</div>
-            <div>📐 {room.sizeSqm ?? 0}m²</div>
-            {data?.floorRange && <div>📍 {data.floorRange}</div>}
+            <div>{room.capacity ?? 0} khách</div>
+            <div>{bedText}</div>
+            <div>{room.sizeSqm ?? 0}m²</div>
+            {data?.floorRange && <div>{data.floorRange}</div>}
           </div>
         </motion.div>
 
@@ -213,7 +226,7 @@ export default function RoomDetail() {
                     className="h4 mb-3"
                     style={{ fontFamily: 'Playfair Display, serif' }}
                   >
-                    📋 Mô tả phòng
+                    Mô tả phòng
                   </Card.Title>
                   <p className="text-muted" style={{ lineHeight: '1.8' }}>
                     {data?.description || 'Phòng nghỉ hiện đại, trang bị đầy đủ tiện nghi cao cấp với thiết kế sang trọng và thoải mái.'}
@@ -235,7 +248,7 @@ export default function RoomDetail() {
                       className="h4 mb-3"
                       style={{ fontFamily: 'Playfair Display, serif' }}
                     >
-                      ✨ Điểm nổi bật
+                      Điểm nổi bật
                     </Card.Title>
                     <Row>
                       {data.highlights.map((h, i) => (
@@ -245,15 +258,6 @@ export default function RoomDetail() {
                             whileHover={{ x: 5 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <span 
-                              className="text-success"
-                              style={{ 
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold'
-                              }}
-                            >
-                              ✓
-                            </span>
                             <span style={{ lineHeight: '1.8' }}>{h}</span>
                           </motion.div>
                         </Col>
@@ -277,7 +281,7 @@ export default function RoomDetail() {
                       className="h4 mb-4"
                       style={{ fontFamily: 'Playfair Display, serif' }}
                     >
-                      🛎️ Tiện nghi phòng
+                      Tiện nghi phòng
                     </Card.Title>
                     {Object.entries(data.amenities).map(([category, items]) => (
                       <div key={category} className="mb-4">
@@ -313,105 +317,17 @@ export default function RoomDetail() {
             >
               <Card className="card-soft mt-4">
                 <Card.Body>
-                  <div className="d-flex justify-content-between align-items-center mb-4">
-                    <Card.Title 
-                      className="h4 mb-0"
-                      style={{ fontFamily: 'Playfair Display, serif' }}
-                    >
-                      💬 Đánh giá của khách
-                    </Card.Title>
-                    <Badge 
-                      bg="warning" 
-                      text="dark" 
-                      className="px-3 py-2"
-                      style={{ fontSize: '1.1rem' }}
-                    >
-                      ⭐ {room.rating ?? 4.7}
-                    </Badge>
-                  </div>
-
-                  {/* Rating Histogram */}
-                  {data?.ratingHistogram && (
-                    <div className="mb-4">
-                      {Object.entries(data.ratingHistogram)
-                        .sort((a, b) => b[0] - a[0])
-                        .map(([star, count]) => (
-                          <div key={star} className="d-flex align-items-center gap-3 mb-2">
-                            <span className="small fw-semibold" style={{ width: '60px' }}>
-                              {star} ⭐
-                            </span>
-                            <div 
-                              className="flex-grow-1 bg-light rounded" 
-                              style={{ height: '10px', overflow: 'hidden' }}
-                            >
-                              <motion.div
-                                className="h-100"
-                                style={{ 
-                                  background: 'linear-gradient(90deg, #FFB800 0%, #FFA000 100%)'
-                                }}
-                                initial={{ width: 0 }}
-                                animate={{ 
-                                  width: `${(count / (room.reviews || 1)) * 100}%` 
-                                }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
-                              />
-                            </div>
-                            <span className="small text-muted" style={{ width: '50px', textAlign: 'right' }}>
-                              {count}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-
-                  {/* Reviews List */}
-                  <div className="mt-4">
-                    {data?.reviews && data.reviews.length > 0 ? (
-                      data.reviews.map((review, i) => (
-                        <motion.div
-                          key={i}
-                          className="mb-4 pb-4 border-bottom"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3 + i * 0.1 }}
-                        >
-                          <div className="d-flex align-items-start gap-3">
-                            {review.avatarUrl && (
-                              <img
-                                src={review.avatarUrl}
-                                alt={review.userName}
-                                className="rounded-circle"
-                                style={{
-                                  width: '56px',
-                                  height: '56px',
-                                  objectFit: 'cover',
-                                  border: '3px solid #f0f0f0'
-                                }}
-                              />
-                            )}
-                            <div className="flex-grow-1">
-                              <div className="d-flex align-items-center gap-2 mb-2">
-                                <div className="fw-semibold">{review.userName}</div>
-                                <Badge bg="warning" text="dark">
-                                  ⭐ {review.rating}
-                                </Badge>
-                              </div>
-                              <p className="mb-2" style={{ lineHeight: '1.6' }}>
-                                {review.comment}
-                              </p>
-                              <div className="small text-muted">{review.date}</div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))
-                    ) : (
-                      <div className="text-center text-muted py-5">
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💭</div>
-                        <p className="mb-2 fw-semibold">Chưa có đánh giá nào</p>
-                        <p className="small">Hãy là người đầu tiên đánh giá phòng này!</p>
-                      </div>
-                    )}
-                  </div>
+                  <RoomRating roomId={parseInt(id)} />
+                  <ReviewFormForRoom 
+                    roomId={parseInt(id)} 
+                    onSuccess={() => {
+                      // Dispatch event to refresh reviews and rating
+                      window.dispatchEvent(new CustomEvent('review-submitted', { 
+                        detail: { roomId: parseInt(id) } 
+                      }))
+                    }}
+                  />
+                  <ReviewList roomId={parseInt(id)} />
                 </Card.Body>
               </Card>
             </motion.div>
@@ -426,16 +342,32 @@ export default function RoomDetail() {
             >
               <Card className="card-soft booking-card sticky-booking">
                 <Card.Body>
-                  {discount > 0 && (
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                      <Badge bg="danger" className="px-2 py-1">
-                        -{discount}%
-                      </Badge>
-                      <span className="text-decoration-line-through text-muted small">
-                        {Math.round(price * (1 + discount / 100)).toLocaleString('vi-VN')}₫
-                      </span>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    {/* Rating với icon sao */}
+                    <div className="d-flex align-items-center gap-2">
+                      <span style={{ fontSize: '1.3rem', color: '#FFB800' }}>★</span>
+                      <div>
+                        <div className="fw-bold" style={{ fontSize: '1.1rem', color: '#333' }}>
+                          {room.rating ?? 4.7}
+                        </div>
+                        <div className="small text-muted" style={{ fontSize: '0.75rem' }}>
+                          {room.reviews ?? 0} đánh giá
+                        </div>
+                      </div>
                     </div>
-                  )}
+                    
+                    {/* Discount màu đỏ */}
+                    {discount > 0 && (
+                      <div className="d-flex align-items-center gap-2">
+                        <Badge bg="danger" className="px-2 py-1" style={{ fontSize: '0.9rem', fontWeight: '600' }}>
+                          -{discount}%
+                        </Badge>
+                        <span className="text-decoration-line-through text-muted small">
+                          {Math.round(price * (1 + discount / 100)).toLocaleString('vi-VN')}₫
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   
                   <div 
                     className="mb-1"
@@ -466,16 +398,16 @@ export default function RoomDetail() {
                         boxShadow: '0 8px 20px rgba(201, 162, 74, 0.4)'
                       }}
                     >
-                      🏨 Đặt phòng ngay
+                      Đặt phòng ngay
                     </Button>
                   </motion.div>
 
                   <ul className="mt-4 list-unstyled">
                     {[
-                      { icon: '✔️', text: 'Miễn phí hủy trong 24 giờ' },
-                      { icon: '✔️', text: 'Thanh toán khi nhận phòng' },
-                      { icon: '✔️', text: 'Xác nhận đặt phòng ngay lập tức' }
-                    ].map((item, i) => (
+                      'Miễn phí hủy trong 24 giờ',
+                      'Thanh toán khi nhận phòng',
+                      'Xác nhận đặt phòng ngay lập tức'
+                    ].map((text, i) => (
                       <motion.li
                         key={i}
                         className="mb-2 d-flex align-items-start gap-2"
@@ -483,15 +415,14 @@ export default function RoomDetail() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.5 + i * 0.1 }}
                       >
-                        <span>{item.icon}</span>
-                        <span className="small text-muted">{item.text}</span>
+                        <span className="small text-muted">{text}</span>
                       </motion.li>
                     ))}
                   </ul>
 
                   <div className="mt-4 pt-3 border-top">
                     <div className="small text-muted text-center">
-                      💡 <strong>Mẹo:</strong> Đặt sớm để được giá tốt nhất!
+                      <strong>Mẹo:</strong> Đặt sớm để được giá tốt nhất!
                     </div>
                   </div>
                 </Card.Body>

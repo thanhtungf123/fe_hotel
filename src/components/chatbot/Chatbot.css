@@ -1,0 +1,47 @@
+.chatbot-window {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.chatbot-toggle {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.chatbot-window .card-body {
+  scrollbar-width: thin;
+  scrollbar-color: #c9a24a #f8f9fa;
+}
+
+.chatbot-window .card-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatbot-window .card-body::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.chatbot-window .card-body::-webkit-scrollbar-thumb {
+  background: #c9a24a;
+  border-radius: 3px;
+}
+
+

@@ -12,6 +12,9 @@ export default function WalkInBooking() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [bookings, setBookings] = useState([]);
+  const [services, setServices] = useState([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(false);
 
   const [form, setForm] = useState({
     roomId: "",
@@ -19,13 +22,26 @@ export default function WalkInBooking() {
     checkOut: "",
     fullName: "",
     phoneNumber: "",
-    nationalIdNumber: "",
     gender: "male",
   });
 
   useEffect(() => {
     loadRooms();
+    loadServices();
   }, []);
+
+  const loadServices = async () => {
+    setLoadingServices(true);
+    try {
+      const { data } = await axios.get("/services");
+      setServices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load services:", err);
+      setServices([]);
+    } finally {
+      setLoadingServices(false);
+    }
+  };
 
   useEffect(() => {
     if (form.roomId) {
@@ -71,7 +87,6 @@ export default function WalkInBooking() {
     }
     if (!form.fullName) return "Vui lòng nhập tên khách hàng";
     if (!form.phoneNumber) return "Vui lòng nhập số điện thoại";
-    if (!form.nationalIdNumber) return "Vui lòng nhập số CMND/CCCD";
     return null;
   };
 
@@ -86,7 +101,11 @@ export default function WalkInBooking() {
     setSubmitting(true);
     setError("");
     try {
-      const { data } = await axios.post("/staff/bookings/walk-in", form);
+      const payload = {
+        ...form,
+        serviceIds: selectedServiceIds.length > 0 ? selectedServiceIds : null
+      };
+      const { data } = await axios.post("/staff/bookings/walk-in", payload);
       showToast.success(`Booking #${data.bookingId} thành công! Phòng đã được block.`);
       // Reset form
       setForm({
@@ -95,9 +114,9 @@ export default function WalkInBooking() {
         checkOut: "",
         fullName: "",
         phoneNumber: "",
-        nationalIdNumber: "",
         gender: "male",
       });
+      setSelectedServiceIds([]);
       await loadRooms(); // Refresh room list
       if (form.roomId) {
         await loadRoomBookings(form.roomId); // Refresh bookings
@@ -116,7 +135,34 @@ export default function WalkInBooking() {
     ? Math.ceil((new Date(form.checkOut) - new Date(form.checkIn)) / (1000 * 60 * 60 * 24))
     : 0;
   const pricePerNight = selectedRoom?.priceVnd || selectedRoom?.pricePerNight || 0;
-  const totalPrice = selectedRoom && nights > 0 ? pricePerNight * nights : 0;
+  const roomTotal = selectedRoom && nights > 0 ? pricePerNight * nights : 0;
+  
+  // Calculate services total
+  const servicesTotal = selectedServiceIds.reduce((sum, serviceId) => {
+    const service = services.find(s => s.id === serviceId);
+    return sum + (service ? (service.price || 0) : 0);
+  }, 0);
+  
+  // Get selected services list
+  const selectedServices = selectedServiceIds.map(serviceId => 
+    services.find(s => s.id === serviceId)
+  ).filter(Boolean);
+  
+  // Calculate pricing with tax and service fee
+  const subtotal = roomTotal + servicesTotal;
+  const tax = Math.round(subtotal * 0.10); // 10% tax
+  const serviceFee = Math.round(subtotal * 0.05); // 5% service fee
+  const totalPrice = subtotal + tax + serviceFee;
+
+  const toggleService = (serviceId) => {
+    setSelectedServiceIds(prev => {
+      if (prev.includes(serviceId)) {
+        return prev.filter(id => id !== serviceId);
+      } else {
+        return [...prev, serviceId];
+      }
+    });
+  };
 
   return (
     <motion.div
@@ -260,15 +306,75 @@ export default function WalkInBooking() {
                 {selectedRoom && nights > 0 && (
                   <div className="d-flex align-items-end h-100">
                     <div className="w-100">
-                      <Form.Label className="text-muted">Tổng tiền</Form.Label>
+                      <Form.Label className="text-muted">Chi tiết thanh toán</Form.Label>
+                      <div className="small mb-1">
+                        <div>• Phòng ({nights} đêm): {roomTotal.toLocaleString()}₫</div>
+                        {selectedServices.length > 0 && (
+                          <>
+                            <div>• Dịch vụ: {servicesTotal.toLocaleString()}₫</div>
+                            {selectedServices.map(service => (
+                              <div key={service.id} className="ps-3 text-muted" style={{ fontSize: '0.85em' }}>
+                                - {service.nameService || service.name}: {(service.price || 0).toLocaleString()}₫
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        <div>• Thuế (10%): {tax.toLocaleString()}₫</div>
+                        <div>• Phí dịch vụ (5%): {serviceFee.toLocaleString()}₫</div>
+                      </div>
                       <div className="fs-4 fw-bold text-success" style={{ color: "var(--primary-gold)" }}>
-                        {totalPrice.toLocaleString()}₫
-                        <Badge bg="secondary" className="ms-2">
-                          {nights} đêm
-                        </Badge>
+                        Tổng: {totalPrice.toLocaleString()}₫
                       </div>
                     </div>
                   </div>
+                )}
+              </Col>
+
+              <Col md={12}>
+                <hr />
+                <h6 className="mb-3">✨ Dịch vụ bổ sung</h6>
+                {loadingServices ? (
+                  <div className="text-center py-2">
+                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <div className="small text-muted mt-2">Đang tải dịch vụ...</div>
+                  </div>
+                ) : services.length > 0 ? (
+                  <div className="d-flex flex-column gap-2 mb-3">
+                    {services.map((service) => (
+                      <Card
+                        key={service.id}
+                        className={`cursor-pointer ${selectedServiceIds.includes(service.id) ? 'border-primary' : ''}`}
+                        onClick={() => toggleService(service.id)}
+                        style={{
+                          cursor: 'pointer',
+                          borderWidth: '2px',
+                          borderColor: selectedServiceIds.includes(service.id) ? 'var(--primary-gold)' : 'rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        <Card.Body className="d-flex align-items-center gap-3 py-2">
+                          <Form.Check
+                            type="checkbox"
+                            checked={selectedServiceIds.includes(service.id)}
+                            onChange={() => toggleService(service.id)}
+                            style={{ transform: 'scale(1.2)' }}
+                          />
+                          <div className="flex-grow-1">
+                            <div className="fw-semibold">{service.nameService || service.name || 'Dịch vụ'}</div>
+                            {service.description && (
+                              <div className="small text-muted">{service.description}</div>
+                            )}
+                          </div>
+                          <div className="fw-bold" style={{ color: 'var(--primary-gold)' }}>
+                            {((service.price || 0)).toLocaleString('vi-VN')}₫
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-muted small mb-3">Không có dịch vụ nào hiện có.</div>
                 )}
               </Col>
 
@@ -311,18 +417,6 @@ export default function WalkInBooking() {
                     type="text"
                     value={form.phoneNumber}
                     onChange={(e) => handleChange("phoneNumber", e.target.value)}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>CMND/CCCD <span className="text-danger">*</span></Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={form.nationalIdNumber}
-                    onChange={(e) => handleChange("nationalIdNumber", e.target.value)}
                     required
                   />
                 </Form.Group>

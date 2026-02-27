@@ -95,6 +95,73 @@ export async function uploadMultipleFiles(files) {
 }
 
 /**
+ * Upload room image to Cloudinary
+ * @param {File} file - The image file to upload
+ * @returns {Promise<{url: string}>} - Uploaded image URL
+ */
+export async function uploadRoomImage(file) {
+  // Validate file
+  if (!file) {
+    throw new Error('Không có file để upload');
+  }
+
+  // Check file size (max 10MB)
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxSize) {
+    throw new Error('File quá lớn. Kích thước tối đa: 10MB');
+  }
+
+  // Check file type
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Chỉ chấp nhận file ảnh (JPG, PNG, etc.)');
+  }
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const { data } = await axios.post('/uploads/room-image', fd, {
+      headers: { 
+        'Content-Type': 'multipart/form-data' 
+      },
+      timeout: 30000, // 30 seconds
+    });
+
+    if (!data || !data.url) {
+      throw new Error('Server không trả về URL');
+    }
+
+    return data; // { url }
+  } catch (error) {
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.message || error.response.data?.error;
+
+      if (status === 500) {
+        throw new Error(
+          message || 
+          'Lỗi server khi upload. Vui lòng kiểm tra kết nối Cloudinary hoặc thử lại sau.'
+        );
+      } else if (status === 400) {
+        throw new Error(message || 'File không hợp lệ');
+      } else if (status === 413) {
+        throw new Error('File quá lớn');
+      } else if (status === 415) {
+        throw new Error('Định dạng file không được hỗ trợ');
+      } else {
+        throw new Error(message || `Lỗi upload (${status})`);
+      }
+    } else if (error.request) {
+      throw new Error(
+        'Không thể kết nối đến server. Vui lòng kiểm tra backend đã chạy chưa.'
+      );
+    } else {
+      throw new Error(error.message || 'Lỗi không xác định khi upload');
+    }
+  }
+}
+
+/**
  * Validate image file before upload
  * @param {File} file - File to validate
  * @returns {boolean} - True if valid
